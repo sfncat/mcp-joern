@@ -1,0 +1,6 @@
+HOST = "127.0.0.1"
+PORT = "16162"
+USER_NAME = "user"
+PASSWORD = "password"
+LOG_LEVEL = "INFO"
+TIMEOUT = 1000

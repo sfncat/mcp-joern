@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "joern": {
+      "autoApprove": [
+        "get_manifest",
+        "get_method_callers",
+        "get_class_decompiled_code",
+        "get_method_decompiled_code",
+        "check_connection",
+        "ping",
+        "get_method_overrides"
+      ],
+      "disabled": false,
+      "timeout": 1800,
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/kali/workspace/joern_mcp",
+        "run",
+        "server.py"
+      ],
+      "transportType": "stdio"
+    }
+  }
+}
