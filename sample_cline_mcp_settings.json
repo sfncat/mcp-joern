@@ -2,20 +2,29 @@
   "mcpServers": {
     "joern": {
       "autoApprove": [
-        "get_manifest",
-        "get_method_callers",
-        "get_class_decompiled_code",
-        "get_method_decompiled_code",
+        "load_cpg",
+        "check_cpg_loaded",
+        "get_call_code_by_id",
+        "get_method_id_by_call_id",
         "check_connection",
         "ping",
-        "get_method_overrides"
+        "get_method_code_by_id",
+        "get_method_code_by_class_full_name_and_method_name",
+        "get_method_code_by_full_name",
+        "get_class_code_by_id",
+        "get_class_code_by_full_name",
+        "get_class_methods_by_fullName",
+        "get_method_callers",
+        "run_query",
+        "get_method_callees",
+        "get_anonymous_classes_in_class"
       ],
       "disabled": false,
       "timeout": 1800,
       "command": "uv",
       "args": [
         "--directory",
-        "/home/kali/workspace/joern_mcp",
+        "/home/user/github/joern_mcp",
         "run",
         "server.py"
       ],

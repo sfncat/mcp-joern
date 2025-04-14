@@ -1,5 +1,4 @@
 import json
-from sqlite3 import connect
 import sys
 import os
 import requests
@@ -61,13 +60,17 @@ def get_method_callees(method_full_name: str) -> list[str]:
     @return: List of full name and id of methods called by the source method
     """
     responses =  joern_remote(f'cpg.method.fullNameExact("{method_full_name}").head.callee.distinct.map(m => (s"methodFullName=$' + '{m.fullName} methodId=${m.id}L")).l')
-    return extract_list(responses)    
-def load_cpg(filepath: str) -> str:
-    """Load a CPG file into Joern for analysis
-    
-    @param filepath: the path to the CPG file, must be a fully-qualified absolute path
+    return extract_list(responses)
+
+
+def load_cpg(cpg_filepath: str) -> str:
+    """Loads a Code Property Graph (CPG) file into Joern for analysis
+
+    @param filepath: Absolute path to the CPG file
+    @return: Response confirming CPG loading status
     """
-    return joern_remote(f'val cpg = CpgLoader.load("{filepath}")')
+
+    return extract_value(joern_remote(f'val cpg = CpgLoader.load("{cpg_filepath}")'))
 
 def get_method_code_by_id(id:str) -> str:
     """Retrieves the source code of a method by its ID
@@ -136,17 +139,28 @@ def check_cpg_loaded() -> bool:
         return False
     else:
         return True
+def get_anonymous_classes_in_class(class_full_name:str) -> list[str]:
+    """Retrieves a list of anonymous classes defined within a class
+
+    @param class_full_name: The fully qualified name of the class (e.g., com.android.nfc.NfcService)
+    @return: List of full name and id of classes in the source method
+    """
+#     responses =  joern_remote(f'Cp.setCpg()getAnonymousClasses("{class_full_name}")')
+    responses =  joern_remote(f'getAnonymousClasses(cpg, "{class_full_name}")')
+    return extract_list(responses)
 
 if __name__ == "__main__":
     connect_status = check_connection()
     print(connect_status)
-    print(check_cpg_loaded())
-    filepath = '/home/kali/cpg/com.android.nfc.cpg'
-    load_result = load_cpg(filepath=filepath)
+    # print(check_cpg_loaded())
+    filepath = 'cpg/com.android.nfc.cpg'
+    load_result = load_cpg(cpg_filepath=filepath)
     print(load_result)
-    method_name = 'onReceive'
-    class_full_name = 'com.android.nfc.NfcService$6'
-    # print(get_class_methods_by_fullName(class_full_name))
-    # print(get_method_code_by_class_full_name_and_method_name(class_full_name, method_name))
-    mth = "com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent)"
-    print(get_method_callees(mth))
+    # method_name = 'onReceive'
+    # class_full_name = 'com.android.nfc.NfcService$6'
+    # # print(get_class_methods_by_fullName(class_full_name))
+    # # print(get_method_code_by_class_full_name_and_method_name(class_full_name, method_name))
+    # mth = "com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent)"
+    # print(get_method_callees(mth))
+    #     class_full_name = 'com.android.nfc.NfcService'
+    #     print(get_anonymous_classes_in_class(class_full_name))

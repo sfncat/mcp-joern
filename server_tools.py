@@ -141,17 +141,6 @@ def get_class_full_name_by_id(id:str) -> str:
     return extract_value(response)
 
 @mcp.tool()
-def get_class_code_by_id(id:str) -> str:
-    """Retrieves the source code of a class by its ID
-    
-    @param id: The unique identifier of the class (typeDecl), the id is a Long int string, like '111669149702L'
-    @return: The source code of the specified class
-    """
-    response = joern_remote(f'cpg.typeDecl.id({id}).head.code')
-    if response.find('java.util.NoSuchElementException') >=0:
-        return 'Not find by id'
-    return extract_value(response)
-@mcp.tool()
 def get_class_methods_by_fullName(class_full_name:str) -> list[str]:
     """Retrieves a list of methods defined within a class using its fully qualified name
 
@@ -180,10 +169,18 @@ def get_method_callees(method_full_name: str) -> list[str]:
     """
     responses =  joern_remote(f'cpg.method.fullNameExact("{method_full_name}").head.callee.distinct.map(m => (s"methodFullName=$' + '{m.fullName} methodId=${m.id}L")).l')
     return extract_list(responses)  
+@mcp.tool()
+def get_anonymous_classes_in_class(class_full_name:str) -> list[str]:
+    """Retrieves a list of anonymous classes defined within a class
 
+    @param class_full_name: The fully qualified name of the class (e.g., com.android.nfc.NfcService)
+    @return: List of full name and id of classes in the source method
+    """
+    responses =  joern_remote(f'getAnonymousClasses("{class_full_name}")')
+    return extract_list(responses)
 @mcp.tool()
 def run_query(query: str) -> str:
-    """Executes a custom Joern query on the loaded CPG
+    """Executes a custom Joern query on the loaded CPG,Strings in joern must use double quotes instead of single quotes
     
     @param query: A valid Joern/Scala query to execute
     @return: The query results as returned by the Joern server

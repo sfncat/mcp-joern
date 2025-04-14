@@ -1,75 +1,91 @@
 # Joern MCP Server
 
-A simple Joern MCP Server.
+A simple MCP Server for Joern.
 
 ## Project Introduction
 
-This project is a Joern-based MCP Server that provides a series of features to help developers with code review and security analysis.
+This project is an MCP Server based on Joern, providing a series of features to help developers with code review and security analysis.
 
 ## Environment Requirements
 
-- Python >= 3.12 & uv
+- Python >= 3.10 (default 3.12) & uv
 - Joern
 
 ## Installation Steps
 
 1. Clone the project locally:
    ```bash
-   git clone [project address]
+   git clone https://github.com/sfncat/mcp-joern.git
+   cd mcp-joern
    ```
 
 2. Install Python dependencies:
    ```bash
-   pip install -r requirements.txt
+   uv venv .venv
+   source .venv/bin/activate
+   uv sync
    ```
 
 ## Project Structure
 
 ```
 ├── server.py           # MCP Server main program
-├── demo.sc             # joern sc example script
-├── demo.py             # joern server and mcp tool test program
-├── common_tools.py     # common utility functions
-├── server_tools.py     # server utility functions
-└── requirements.txt    # Python dependency file
-└── env_example.txt     # environment variables example file
+├── demo.py             # Test program for joern server and mcp tool
+├── common_tools.py     # Common utility functions
+├── server_tools.py     # Server utility functions
+├── server_tools.sc     # Scala implementation of server utility functions
+├── requirements.txt    # Python dependency file
+└── env_example.txt     # Environment variables example file
 ```
 
-## Usage Instructions
+## Usage
 
 1. Start the Joern server:
    ```bash
-   joern -J-xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password
+   joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools.sc
    ```
-2. Copy env_example.txt to .env
-   Modify the configuration information to match the joern server settings
 
-3. Run connection test:
-   Modify the information in demo.py to confirm joern server is working normally
+2. Copy env_example.txt to .env
+   Modify the configuration information to match the joern server startup configuration
+
+3. Run the test connection:
+   Modify the information in `demo.py` to confirm the joern server is working properly
+
    ```bash
    python demo.py
+   127.0.0.1:16162
+   Successfully connected to Joern MCP, joern server version is XXX
    ```
 
 4. Configure MCP server
    Configure the mcp server in cline, refer to `sample_cline_mcp_settings.json`.
 
 5. Use MCP server
-   Ask questions to the large language model, refer to prompts_en.md
+   Ask questions to the large language model, refer to `prompts_en.md`
 
 ## Development Notes
 
 - `.env` file is used to store environment variables
-- `.gitignore` file defines which files Git version control should ignore
+- `.gitignore` file defines files to be ignored by Git version control
 - `pyproject.toml` defines the Python configuration for the project
-
-## License
-
-[To be added]
+- MCP tool development
+  - Simple tools can be added and defined directly in `server_tools.py`
+  - Complex tools can be implemented in `server_tools.sc`, add definitions in `server_tools.py`, and add the tool in scala with the required cpg parameter
 
 ## Contribution Guidelines
 
-Issues and Pull Requests are welcome to help improve the project.
+Welcome to submit Issues and Pull Requests to help improve the project.
 
-## Contact Information
+Welcome to add more tools.
 
-[To be added]
+## References
+
+https://github.com/flankerhqd/jebmcp
+
+https://docs.joern.io/server/
+
+https://docs.joern.io/interpreter/
+
+## Other Languages
+
+- [简体中文 (Simplified Chinese)](README_cn.md)

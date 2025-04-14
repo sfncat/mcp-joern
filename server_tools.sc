@@ -7,8 +7,10 @@ import io.shiftleft.codepropertygraph.generated.nodes
 import io.shiftleft.codepropertygraph.generated.PropertyNames
 import io.joern.dataflowengineoss.language.*
 import scala.jdk.CollectionConverters.*
+
 implicit val resolver: ICallResolver = NoResolve
 implicit val finder: NodeExtensionFinder = DefaultNodeExtensionFinder
+
 import io.joern.joerncli.console.Joern.context
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -21,9 +23,13 @@ import _root_.io.joern.dataflowengineoss.language.*
 import _root_.io.shiftleft.semanticcpg.language.*
 
 
-def getAnonymousClasses(class_full_name: String): List[String] = {
+
+
+var cpg: Cpg = null
+def getAnonymousClasses(cpg: Cpg, class_full_name: String): List[String] = {
+    val classDecl = cpg.typeDecl.filter(_.fullName == class_full_name).l.head
     cpg.typeDecl
-      .filter(_.filename == class_full_name)
+      .filter(_.filename == classDecl.filename)
       .filter(_.fullName.startsWith(s"${class_full_name}" + "$"))
-      .map(c => (s"classFullName=$' + '{c.fullName} classId=${c.id}L")).l
+      .map(c => (s"classFullName=${c.fullName} classId=${c.id}L")).l
   }
