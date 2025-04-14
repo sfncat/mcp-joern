@@ -48,13 +48,27 @@ def extract_list(input_str):
     if not input_str:
         return []
     
-    # 直接使用正则表达式匹配双引号内的内容，不需要先提取List内容
-    # 这个模式可以处理多行字符串和内部包含逗号的元素
-    pattern = r'"((?:\\.|[^"\\])*?)"'
-    matches = re.findall(pattern, input_str, re.DOTALL)
+    # 使用正则表达式匹配List内容
+    list_pattern = r'List\((.*?)\)$'
+    list_match = re.search(list_pattern, input_str, re.DOTALL)
+    if not list_match:
+        return []
+        
+    content = list_match.group(1).strip()
+    
+    # 尝试匹配三引号内容
+    triple_quote_pattern = r'"""(.*?)"""'
+    triple_quote_matches = re.findall(triple_quote_pattern, content, re.DOTALL)
+    
+    if triple_quote_matches:
+        return triple_quote_matches
+    
+    # 如果没有三引号内容，尝试匹配普通引号内容
+    single_quote_pattern = r'"((?:\\.|[^"\\])*?)"'
+    single_quote_matches = re.findall(single_quote_pattern, content, re.DOTALL)
     
     elements = []
-    for item in matches:
+    for item in single_quote_matches:
         if item.strip():
             # 处理转义字符
             cleaned = item.replace("\\\"", "\"").replace("\\\\", "\\")
@@ -98,10 +112,10 @@ def extract_value(input_str: str) -> str:
     """Extract value from a string based on its pattern.
     
     This function automatically selects the appropriate extraction method based on
-    the input string's characteristics:
-    - If contains 'Long =', uses extract_long_value
-    - If contains 'String = \"\"\"', uses extract_code_between_triple_quotes
-    - If contains 'String = "' but not triple quotes, uses extract_quoted_string
+    the input string format:
+    * If contains 'Long =', uses extract_long_value
+    * If contains triple quotes, uses extract_code_between_triple_quotes
+    * If contains single quotes, uses extract_quoted_string
     
     Args:
         input_str (str): Input string containing a value to extract
