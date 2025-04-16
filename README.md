@@ -29,13 +29,15 @@ This project is an MCP Server based on Joern, providing a series of features to 
 ## Project Structure
 
 ```
-├── server.py           # MCP Server main program
-├── demo.py             # Test program for joern server and mcp tool
-├── common_tools.py     # Common utility functions
-├── server_tools.py     # Server utility functions
-├── server_tools.sc     # Scala implementation of server utility functions
-├── requirements.txt    # Python dependency file
-└── env_example.txt     # Environment variables example file
+├── server.py                       # MCP Server main program
+├── test_mcp_client.py              # Test program for joern server and mcp tool
+├── test_sc_tools.py                # Direct test program for sc tools
+├── common_tools.py                 # Common utility functions
+├── server_tools.py                 # Server utility functions
+├── server_tools.sc                 # Scala implementation of server utility functions
+├── requirements.txt                # Python dependency file
+├── sample_cline_mcp_settings.json  # Sample cline mcp configuration file
+└── env_example.txt                 # Environment variables example file
 ```
 
 ## Usage
@@ -49,12 +51,15 @@ This project is an MCP Server based on Joern, providing a series of features to 
    Modify the configuration information to match the joern server startup configuration
 
 3. Run the test connection:
-   Modify the information in `demo.py` to confirm the joern server is working properly
+   Modify the information in `test_mcp_client.py` to confirm the joern server is working properly
 
    ```bash
-   python demo.py
-   127.0.0.1:16162
-   Successfully connected to Joern MCP, joern server version is XXX
+   uv run test_mcp_client.py
+   Starting MCP server test...
+   ==================================================
+   Testing server connection...
+   [04/16/25 20:38:54] INFO     Processing request of type CallToolRequest                                                                                                                     server.py:534
+   Connection test result: Successfully connected to Joern MCP, joern server version is XXX
    ```
 
 4. Configure MCP server
@@ -69,8 +74,7 @@ This project is an MCP Server based on Joern, providing a series of features to 
 - `.gitignore` file defines files to be ignored by Git version control
 - `pyproject.toml` defines the Python configuration for the project
 - MCP tool development
-  - Simple tools can be added and defined directly in `server_tools.py`
-  - Complex tools can be implemented in `server_tools.sc`, add definitions in `server_tools.py`, and add the tool in scala with the required cpg parameter
+  - Implement in `server_tools.sc`, add definitions in `server_tools.py`, and add tests in `test_mcp_client.py`
 
 ## Contribution Guidelines
 
@@ -85,7 +89,3 @@ https://github.com/flankerhqd/jebmcp
 https://docs.joern.io/server/
 
 https://docs.joern.io/interpreter/
-
-## Other Languages
-
-- [简体中文 (Simplified Chinese)](README_cn.md)

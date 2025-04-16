@@ -29,13 +29,15 @@
 ## 项目结构
 
 ```
-├── server.py           # MCP Server主程序
-├── demo.py             # joern server和 mcp tool测试程序
-├── common_tools.py     # 通用工具函数
-├── server_tools.py     # 服务器工具函数
-├── server_tools.sc     # 服务器工具函数的scala实现
-├── requirements.txt    # Python依赖文件
-└── env_example.txt     # 环境变量样例文件
+├── server.py                       # MCP Server主程序
+├── test_mcp_client.py              # joern server和 mcp tool测试程序
+├── test_sc_tools.py                # 直接测试sc中的tool程序
+├── common_tools.py                 # 通用工具函数
+├── server_tools.py                 # 服务器工具函数
+├── server_tools.sc                 # 服务器工具函数的scala实现
+├── requirements.txt                # Python依赖文件
+├── sample_cline_mcp_settings.json  # cline mcp 配置样例文件
+└── env_example.txt                 # 环境变量样例文件
 ```
 
 ## 使用方法
@@ -49,14 +51,17 @@
    修改配置信息和joern server启动配置的信息一致
 
 3. 运行测试连接：
-   修改`demo.py`中的信息，确认joern server正常
+   修改`test_mcp_client.py`中的信息，确认joern server正常
 
    ```bash
-   python demo.py
-   127.0.0.1:16162
-   Successfully connected to Joern MCP, joern server version is XXX
+   uv run test_mcp_client.py
+   Starting MCP server test...
+   ==================================================
+   Testing server connection...
+   [04/16/25 20:38:54] INFO     Processing request of type CallToolRequest                                                                                                                     server.py:534
+   Connection test result: Successfully connected to Joern MCP, joern server version is XXX
    ```
-
+   
 4. 配置MCP server
    在cline中配置mcp服务器，可参考 `sample_cline_mcp_settings.json` 。
 
@@ -69,8 +74,7 @@
 - `.gitignore` 文件定义了Git版本控制需要忽略的文件
 - `pyproject.toml` 定义了项目的Python配置
 - mcp tool开发
-  - 简单的tool可以在`server_tools.py`中直接增加和定义
-  - 复杂的tool可以在`server_tools.sc`中实现,在`server_tools.py`增加定义,在sc中增加tool需要传入cpg参数
+  - 在`server_tools.sc`中实现，在`server_tools.py`增加定义，在`test_mcp_client.py`中增加测试
 
 
 ## 贡献指南

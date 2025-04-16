@@ -171,3 +171,13 @@ def get_referenced_method_full_name_by_call_id(id:str) -> str:
     """
     response =  joern_remote(f'get_referenced_method_full_name_by_call_id("{id}")')
     return extract_value(response)   
+
+@mcp.tool()
+def get_calls_in_method_by_method_full_name(method_full_name:str) -> list[str]:
+    """Get the calls info by the method full name which the call is in the method
+
+    @param method_full_name: The full name of the method
+    @return: The calls info of the method
+    """
+    response = joern_remote(f'get_calls_in_method_by_method_full_name("{method_full_name}")')
+    return extract_list(response)

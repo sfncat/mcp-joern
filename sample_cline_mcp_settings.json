@@ -17,7 +17,8 @@
         "get_derived_classes_by_class_full_name",
         "get_parent_classes_by_class_full_name",
         "get_method_by_call_id",
-        "get_referenced_method_full_name_by_call_id"
+        "get_referenced_method_full_name_by_call_id",
+        "get_calls_in_method_by_method_full_name"
       ],
       "disabled": false,
       "timeout": 1800,

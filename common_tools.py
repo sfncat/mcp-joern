@@ -44,11 +44,11 @@ def extract_list(input_str):
     Returns:
     A Python list containing the extracted elements with cleaned data
     """
-    # 首先检查输入是否为空或None
+    # Check if input is empty or None
     if not input_str:
         return []
     
-    # 使用正则表达式匹配List内容
+    # Use regex to match List content
     list_pattern = r'List\((.*?)\)$'
     list_match = re.search(list_pattern, input_str, re.DOTALL)
     if not list_match:
@@ -56,22 +56,22 @@ def extract_list(input_str):
         
     content = list_match.group(1).strip()
     
-    # 尝试匹配三引号内容
+    # Try to match content within triple quotes
     triple_quote_pattern = r'"""(.*?)"""'
     triple_quote_matches = re.findall(triple_quote_pattern, content, re.DOTALL)
     
     if triple_quote_matches:
         return triple_quote_matches
     
-    # 如果没有三引号内容，尝试匹配普通引号内容
+    # If no triple-quoted content found, try to match content within regular quotes
     single_quote_pattern = r'"((?:\\.|[^"\\])*?)"'
     single_quote_matches = re.findall(single_quote_pattern, content, re.DOTALL)
     
     elements = []
     for item in single_quote_matches:
         if item.strip():
-            # 处理转义字符
-            cleaned = item.replace("\\\"", "\"").replace("\\\\", "\\")
+            # Handle escape characters
+            cleaned = item.replace('\\"', '"').replace('\\\\', '\\')
             elements.append(cleaned)
     
     return elements

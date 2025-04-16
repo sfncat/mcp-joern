@@ -53,6 +53,16 @@ def get_class_info_by_id(id:Long): String = {
   s"class_full_name=${cls.fullName}|class_name=${cls.name}|class_id=${cls.id}L"
 }
 
+def get_call_info_by_id(id:Long): String = {
+  /*Get the info of a call by its id
+
+  @param id: The id of the call 
+  @return: The info of the call, including the code and id
+  */
+  val call = cpg.call.id(id).head
+  s"call_code=${call.code}|call_id=${call.id}L"
+}
+
 def _get_classes(class_full_name: String, visited: mutable.Set[String] = mutable.Set()): List[nodes.TypeDecl] = {
     /*Retrieves a list of anonymous classes defined within a class
 
@@ -244,3 +254,13 @@ def get_referenced_method_full_name_by_call_id(id: String): String = {
   */
   cpg.call.id(convertToLong(id)).head.methodFullName
 }
+
+def get_calls_in_method_by_method_full_name(method_full_name: String): List[String] = {
+  /* Get the calls in a method by the method full name
+  @param method_full_name: The fully qualified name of the method
+  @return: The calls info in the method, including the code and id
+   */
+  val method = cpg.method.filter(_.fullName == method_full_name).head
+  method.ast.isCall.collect(c => get_call_info_by_id(c.id)).l
+}
+
