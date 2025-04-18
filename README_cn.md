@@ -35,6 +35,7 @@
 ├── common_tools.py                 # 通用工具函数
 ├── server_tools.py                 # 服务器工具函数
 ├── server_tools.sc                 # 服务器工具函数的scala实现
+├── server_tools_source.sc          # 服务器工具函数的scala实现,使用sourceCode获取method的code
 ├── requirements.txt                # Python依赖文件
 ├── sample_cline_mcp_settings.json  # cline mcp 配置样例文件
 └── env_example.txt                 # 环境变量样例文件
@@ -45,6 +46,8 @@
 1. 启动Joern服务器：
    ```bash
    joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools.sc
+   或
+   joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools_source.sc
    ```
 
 2. 复制env_example.txt为.env

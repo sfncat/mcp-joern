@@ -35,6 +35,7 @@ This project is an MCP Server based on Joern, providing a series of features to 
 ├── common_tools.py                 # Common utility functions
 ├── server_tools.py                 # Server utility functions
 ├── server_tools.sc                 # Scala implementation of server utility functions
+├── server_tools_source.sc          # Scala implementation of server utility functions,use sourceCode to get the source code of method
 ├── requirements.txt                # Python dependency file
 ├── sample_cline_mcp_settings.json  # Sample cline mcp configuration file
 └── env_example.txt                 # Environment variables example file
@@ -45,6 +46,8 @@ This project is an MCP Server based on Joern, providing a series of features to 
 1. Start the Joern server:
    ```bash
    joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools.sc
+   Or
+   joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools_source.sc
    ```
 
 2. Copy env_example.txt to .env

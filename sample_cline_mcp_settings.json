@@ -13,7 +13,6 @@
         "get_method_full_name_by_id",
         "get_call_code_by_id",
         "get_method_code_by_class_full_name_and_method_name",
-        "get_method_by_full_name_without_signature",
         "get_derived_classes_by_class_full_name",
         "get_parent_classes_by_class_full_name",
         "get_method_by_call_id",

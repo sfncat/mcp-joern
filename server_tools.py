@@ -52,13 +52,13 @@ def get_method_callers(method_full_name: str) -> list[str]:
     return extract_list(responses)
 
 @mcp.tool()
-def get_class_full_name_by_id(id:str) -> str:
+def get_class_full_name_by_id(class_id:str) -> str:
     """Retrieves the fully name of a class by its ID
     
     @param id: The unique identifier of the class (typeDecl), the id is a Long int string, like '111669149702L'
     @return: The fully name of the class (e.g., com.android.nfc.NfcService$6)
     """
-    response =  joern_remote(f'get_class_full_name_by_id("{id}")')
+    response =  joern_remote(f'get_class_full_name_by_id("{class_id}")')
     return extract_value(response)
 
 @mcp.tool()
@@ -73,7 +73,8 @@ def get_class_methods_by_class_full_name(class_full_name:str) -> list[str]:
 
 @mcp.tool()
 def get_method_code_by_full_name(method_full_name:str) -> str:
-    """Get the code of a method by its fully name
+    """Get the code of a method by its fully name, If you know the full name of the method, you can use this tool to get the method code directly. 
+    If you only know the full name of the class and the name of the method, you should use get_method_code_by_class_full_name_and_method_name
     @param method_full_name: The fully qualified name of the method (e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
     @return: The source code of the specified method
     """
@@ -81,56 +82,57 @@ def get_method_code_by_full_name(method_full_name:str) -> str:
     return extract_value(response)
 
 @mcp.tool()
-def get_method_code_by_id(id:str) -> str:
+def get_method_code_by_id(method_id:str) -> str:
     """Get the code of a method by its class full name and method name
   
     @param class_full_name: The fully qualified name of the class
     @param method_name: The name of the method
     @return: List of full name, name, signature and id of methods in the class
     """
-    response =  joern_remote(f'get_method_code_by_id("{id}")')
+    response =  joern_remote(f'get_method_code_by_id("{method_id}")')
     return extract_value(response)
 
 @mcp.tool()
-def get_method_full_name_by_id(id:str) -> str:
+def get_method_full_name_by_id(method_id:str) -> str:
     """Retrieves the fully qualified name of a method by its ID
     
     @param id: The unique identifier of the method, the id is a Long int string, like '111669149702L'
     @return: The fully qualified name of the method (e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
     """
-    response = joern_remote(f'get_method_full_name_by_id("{id}")')
+    response = joern_remote(f'get_method_full_name_by_id("{method_id}")')
     return extract_value(response)
 
 @mcp.tool()
-def get_call_code_by_id(id:str) -> str:
+def get_call_code_by_id(code_id:str) -> str:
     """Get the source code of a specific call node from the loaded CPG by the call id
     
     @param id: The unique identifier of the call node, the id is a Long int string, like '111669149702L'
     @return: The source code of the specified call
     """
-    response =  joern_remote(f'get_call_code_by_id("{id}")')
+    response =  joern_remote(f'get_call_code_by_id("{code_id}")')
     return extract_value(response)
 
 @mcp.tool()
 def get_method_code_by_class_full_name_and_method_name(class_full_name:str, method_name:str) -> list[str]:
-    """Get the code of a method by its class full name and method name
+    """Get the code of a method by its class full name and method name,
+    this tool is usually used when you don't know the full name of the method, but you know the full name of the class and the name of the method. If there are multiple methods with the same name in the class, the code of all methods will be returned.
   
-    @param class_full_name: The fully qualified name of the class
-    @param method_name: The name of the method
+    @param class_full_name: The fully qualified name of the class, like 'com.android.nfc.NfcService'
+    @param method_name: The name of the method, like 'onReceive'
     @return: List of full name, name, signature and id of methods in the class
     """
     responses = joern_remote(f'get_method_code_by_class_full_name_and_method_name("{class_full_name}", "{method_name}")')
     return extract_list(responses)
 
-@mcp.tool()
-def get_method_by_full_name_without_signature(full_name_without_signature:str) -> str:
-    """Get the info of a method list by its fully qualified name without signature
+# @mcp.tool()
+# def get_method_by_full_name_without_signature(full_name_without_signature:str) -> list[str]:
+#     """Get the info of a method list by its fully qualified name without signature
     
-    @param full_name_without_signature: fully qualified name of methodwithout signature,like com.android.nfc.NfcService.onReceive
-    @return: The info of the methods, including the full name, name, signature and id
-    """
-    response = joern_remote(f'get_method_by_full_name_without_signature("{full_name_without_signature}")')
-    return extract_value(response)
+#     @param full_name_without_signature: fully qualified name of methodwithout signature,like com.android.nfc.NfcService.onReceive
+#     @return: The info of the methods, including the full name, name, signature and id
+#     """
+#     response = joern_remote(f'get_method_by_full_name_without_signature("{full_name_without_signature}")')
+#     return extract_list(response)
 
 @mcp.tool()
 def get_derived_classes_by_class_full_name(class_full_name:str) -> list[str]:
@@ -153,23 +155,23 @@ def get_parent_classes_by_class_full_name(class_full_name:str) -> list[str]:
     return extract_list(response)
 
 @mcp.tool()
-def get_method_by_call_id(id:str) -> str:
+def get_method_by_call_id(call_id:str) -> str:
     """Get the method info by the call id which the call is in the method
   
     @param id: The id of the call
     @return: The method info of the call
     """
-    response =  joern_remote(f'get_method_by_call_id("{id}")')
+    response =  joern_remote(f'get_method_by_call_id("{call_id}")')
     return extract_value(response)
 
 @mcp.tool()
-def get_referenced_method_full_name_by_call_id(id:str) -> str:
+def get_referenced_method_full_name_by_call_id(call_id:str) -> str:
     """Get the method info by the call id which the call is referenced the method
     
     @param id: The id of the call
     @return: The method info of the call
     """
-    response =  joern_remote(f'get_referenced_method_full_name_by_call_id("{id}")')
+    response =  joern_remote(f'get_referenced_method_full_name_by_call_id("{call_id}")')
     return extract_value(response)   
 
 @mcp.tool()
