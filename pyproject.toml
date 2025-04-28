@@ -5,7 +5,7 @@ description = "A simple Joern MCP Server."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "dotenv>=0.9.9",
+    "python-dotenv>=1.0.1",
     "fastmcp>=2.1.0",
     "requests>=2.32.3",
 ]

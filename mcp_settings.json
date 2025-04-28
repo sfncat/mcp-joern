@@ -20,21 +20,41 @@
         "get_calls_in_method_by_method_full_name"
       ],
       "disabled": false,
-      "timeout": 1800,
       "command": "uv",
       "args": [
         "--directory",
-        "/home/user/github/joern_mcp",
+        "/home/kali/ssd/workspace/mcp-joern",
         "run",
         "server.py"
       ],
       "transportType": "stdio",
+      "description": "Joern mcp server",
       "config": {
         "host":"127.0.0.1",
         "port":"16162",
         "log_level":"ERROR",
-        "description": "Joern mcp server"
+        "timeout": 1800
+      }
+    }
+  },
+  "llm": {
+    "model_type": "custom",
+    "config": {
+      "openai": {
+        "model": "gpt-4",
+        "base_url": "https://api.openai.com/v1",
+        "timeout": 30
+      },
+      "local": {
+        "model": "",
+        "base_url": "http://localhost:8000/v1",
+        "timeout": 30
+      },
+      "custom": {
+        "model": "qwq-plus-latest",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "timeout": 60
       }
     }
   }
-}
+} 

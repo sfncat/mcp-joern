@@ -1,3 +1,4 @@
 requests>=2.32.3
 fastmcp>=2.1.0
-dotenv>=0.9.9
+python-dotenv>=1.1.0
+openai>=1.0.0

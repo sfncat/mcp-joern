@@ -21,10 +21,13 @@ def ping()->str:
 @mcp.tool()
 def load_cpg(cpg_filepath: str) -> str:
     """
-    Loads a CPG from a file if the cpg is not loaded or the cpg is not the same as the filepath
-    
-    @param cpg_filepath: The path to the CPG file, the filepath is absolute path
-    @return: True if the CPG is loaded successfully, False otherwise
+    Loads a CPG from a file if the cpg is not loaded or the cpg is not the same as the filepath.
+
+    Args:
+        cpg_filepath (str): The path to the CPG file, the filepath is absolute path.
+
+    Returns:
+        str: True if the CPG is loaded successfully, False otherwise.
     """
     
     # return extract_value(joern_remote(f'val cpg = CpgLoader.load("{cpg_filepath}")'))

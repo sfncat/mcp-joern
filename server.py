@@ -3,19 +3,37 @@ import sys
 import os
 import re
 import time
+from typing import Dict, Any
+
 import requests
 from fastmcp import FastMCP
 from dotenv import load_dotenv
 from common_tools import *
 
 load_dotenv()
-log_level = os.getenv("LOG_LEVEL", "INFO")
-mcp = FastMCP("joern-mcp", log_level=log_level)
 
-server_endpoint = f'{os.getenv("HOST")}:{os.getenv("PORT")}'
+
+def load_server_config(config_file: str = "mcp_settings.json") -> Dict[str, Any]:
+    """load server config from config file"""
+    try:
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+        return config.get('mcpServers').get('joern').get('config')
+    except FileNotFoundError:
+        print(f"config file {config_file} not exist")
+        return {}
+    except json.JSONDecodeError:
+        print(f"config file {config_file} format error")
+        return {}
+joern_config = load_server_config()
+# server_endpoint = f'{os.getenv("HOST")}:{os.getenv("PORT")}'
+server_endpoint = f'{joern_config.get('host')}:{joern_config.get("port")}'
+log_level = joern_config.get('log_level', 'ERROR')
+joern_mcp = FastMCP("joern-mcp", log_level=log_level)
+joern_mcp._tool_manager.a
 print(server_endpoint)
-basic_auth = (os.getenv("USER_NAME"), os.getenv("PASSWORD"))
-timeout = int(os.getenv("TIMEOUT", 300))
+basic_auth = (os.getenv("JOERN_AUTH_USERNAME"), os.getenv("JOERN_AUTH_PASSWORD"))
+timeout = int(joern_config.get('timeout', '300'))
 
 def joern_remote(query):
     """
@@ -52,8 +70,8 @@ def joern_remote(query):
     return None
 
 
-@mcp.tool()
-def help():
+@joern_mcp.tool()
+def get_help():
     """Get help information from joern server"""
     response = joern_remote('help')
     if response:
@@ -62,7 +80,7 @@ def help():
         return 'Query Failed'
 
 
-@mcp.tool()
+@joern_mcp.tool()
 def check_connection() -> str:
     """Check if the Joern MCP plugin is running"""
     try:
@@ -87,12 +105,13 @@ def generate():
 
 generate()
 
+
 def main():
     """Start the MCP server using stdio transport.
     
     This is the main entry point for running the Joern MCP server.
     """
-    mcp.run(transport="stdio")
+    joern_mcp.run(transport="stdio")
 
 if __name__ == "__main__":
     main()
