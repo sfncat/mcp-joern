@@ -30,7 +30,7 @@ joern_config = load_server_config()
 server_endpoint = f'{joern_config.get('host')}:{joern_config.get("port")}'
 log_level = joern_config.get('log_level', 'ERROR')
 joern_mcp = FastMCP("joern-mcp", log_level=log_level)
-joern_mcp._tool_manager.a
+# joern_mcp._tool_manager.
 print(server_endpoint)
 basic_auth = (os.getenv("JOERN_AUTH_USERNAME"), os.getenv("JOERN_AUTH_PASSWORD"))
 timeout = int(joern_config.get('timeout', '300'))

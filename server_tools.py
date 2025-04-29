@@ -6,7 +6,7 @@ from pydantic import Field
 
 T = TypeVar("T")
 
-@mcp.tool()
+@joern_mcp.tool()
 def ping()->str:
     """Checks if the Joern server is running and responsive by querying its version
     
@@ -18,7 +18,7 @@ def ping()->str:
     else:
         return 'Query Failed'
 
-@mcp.tool()
+@joern_mcp.tool()
 def load_cpg(cpg_filepath: str) -> str:
     """
     Loads a CPG from a file if the cpg is not loaded or the cpg is not the same as the filepath.
@@ -33,7 +33,7 @@ def load_cpg(cpg_filepath: str) -> str:
     # return extract_value(joern_remote(f'val cpg = CpgLoader.load("{cpg_filepath}")'))
     return extract_value(joern_remote(f'load_cpg("{cpg_filepath}")'))
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_method_callees(method_full_name: str) -> list[str]:
     """Retrieves a list of methods info that are called by the specified method
     
@@ -44,7 +44,7 @@ def get_method_callees(method_full_name: str) -> list[str]:
     responses = joern_remote(f'get_method_callees("{method_full_name}")')
     return extract_list(responses)  
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_method_callers(method_full_name: str) -> list[str]:
     """Retrieves a list of methods that call the specified method
     
@@ -54,7 +54,7 @@ def get_method_callers(method_full_name: str) -> list[str]:
     responses = joern_remote(f'get_method_callers("{method_full_name}")')
     return extract_list(responses)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_class_full_name_by_id(class_id:str) -> str:
     """Retrieves the fully name of a class by its ID
     
@@ -64,7 +64,7 @@ def get_class_full_name_by_id(class_id:str) -> str:
     response =  joern_remote(f'get_class_full_name_by_id("{class_id}")')
     return extract_value(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_class_methods_by_class_full_name(class_full_name:str) -> list[str]:
     """Get the methods of a class by its fully qualified name
   
@@ -74,7 +74,7 @@ def get_class_methods_by_class_full_name(class_full_name:str) -> list[str]:
     response = joern_remote(f'get_class_methods_by_class_full_name("{class_full_name}")')
     return extract_list(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_method_code_by_full_name(method_full_name:str) -> str:
     """Get the code of a method by its fully name, If you know the full name of the method, you can use this tool to get the method code directly. 
     If you only know the full name of the class and the name of the method, you should use get_method_code_by_class_full_name_and_method_name
@@ -84,7 +84,7 @@ def get_method_code_by_full_name(method_full_name:str) -> str:
     response = joern_remote(f'get_method_code_by_method_full_name("{method_full_name}")')
     return extract_value(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_method_code_by_id(method_id:str) -> str:
     """Get the code of a method by its class full name and method name
   
@@ -95,7 +95,7 @@ def get_method_code_by_id(method_id:str) -> str:
     response =  joern_remote(f'get_method_code_by_id("{method_id}")')
     return extract_value(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_method_full_name_by_id(method_id:str) -> str:
     """Retrieves the fully qualified name of a method by its ID
     
@@ -105,7 +105,7 @@ def get_method_full_name_by_id(method_id:str) -> str:
     response = joern_remote(f'get_method_full_name_by_id("{method_id}")')
     return extract_value(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_call_code_by_id(code_id:str) -> str:
     """Get the source code of a specific call node from the loaded CPG by the call id
     
@@ -115,7 +115,7 @@ def get_call_code_by_id(code_id:str) -> str:
     response =  joern_remote(f'get_call_code_by_id("{code_id}")')
     return extract_value(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_method_code_by_class_full_name_and_method_name(class_full_name:str, method_name:str) -> list[str]:
     """Get the code of a method by its class full name and method name,
     this tool is usually used when you don't know the full name of the method, but you know the full name of the class and the name of the method. If there are multiple methods with the same name in the class, the code of all methods will be returned.
@@ -127,7 +127,7 @@ def get_method_code_by_class_full_name_and_method_name(class_full_name:str, meth
     responses = joern_remote(f'get_method_code_by_class_full_name_and_method_name("{class_full_name}", "{method_name}")')
     return extract_list(responses)
 
-# @mcp.tool()
+# @joern_mcp.tool()
 # def get_method_by_full_name_without_signature(full_name_without_signature:str) -> list[str]:
 #     """Get the info of a method list by its fully qualified name without signature
     
@@ -137,7 +137,7 @@ def get_method_code_by_class_full_name_and_method_name(class_full_name:str, meth
 #     response = joern_remote(f'get_method_by_full_name_without_signature("{full_name_without_signature}")')
 #     return extract_list(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_derived_classes_by_class_full_name(class_full_name:str) -> list[str]:
     """Get the derived classes of a class
     
@@ -147,7 +147,7 @@ def get_derived_classes_by_class_full_name(class_full_name:str) -> list[str]:
     response = joern_remote(f'get_derived_classes_by_class_full_name("{class_full_name}")')
     return extract_list(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_parent_classes_by_class_full_name(class_full_name:str) -> list[str]:
     """Get the parent classes of a class
     
@@ -157,7 +157,7 @@ def get_parent_classes_by_class_full_name(class_full_name:str) -> list[str]:
     response = joern_remote(f'get_parent_classes_by_class_full_name("{class_full_name}")')
     return extract_list(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_method_by_call_id(call_id:str) -> str:
     """Get the method info by the call id which the call is in the method
   
@@ -167,7 +167,7 @@ def get_method_by_call_id(call_id:str) -> str:
     response =  joern_remote(f'get_method_by_call_id("{call_id}")')
     return extract_value(response)
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_referenced_method_full_name_by_call_id(call_id:str) -> str:
     """Get the method info by the call id which the call is referenced the method
     
@@ -177,7 +177,7 @@ def get_referenced_method_full_name_by_call_id(call_id:str) -> str:
     response =  joern_remote(f'get_referenced_method_full_name_by_call_id("{call_id}")')
     return extract_value(response)   
 
-@mcp.tool()
+@joern_mcp.tool()
 def get_calls_in_method_by_method_full_name(method_full_name:str) -> list[str]:
     """Get the calls info by the method full name which the call is in the method
 
