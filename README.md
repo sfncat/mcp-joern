@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/sfncat-mcp-joern-badge.png)](https://mseep.ai/app/sfncat-mcp-joern)
+
 # Joern MCP Server
 
 A simple MCP Server for Joern.
