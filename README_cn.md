@@ -49,7 +49,10 @@
    或
    joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools_source.sc
    ```
-
+   如果是在Windows下使用,可能需要通过命令行或在系统环境变量中设置JVM系统变量
+   ```
+   set _JAVA_OPTIONS=-Dfile.encoding=UTF-8
+   ```
 2. 复制env_example.txt为.env
    修改配置信息和joern server启动配置的信息一致
 

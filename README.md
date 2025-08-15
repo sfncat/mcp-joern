@@ -49,7 +49,10 @@ This project is an MCP Server based on Joern, providing a series of features to 
    Or
    joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools_source.sc
    ```
-
+    If you are using it under Windows, you may need to set the JVM system variables through the command line or in the system environment variables.
+   ```
+   set _JAVA_OPTIONS=-Dfile.encoding=UTF-8
+   ```
 2. Copy env_example.txt to .env
    Modify the configuration information to match the joern server startup configuration
 
