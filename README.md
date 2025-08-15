@@ -4,6 +4,10 @@
 
 A simple MCP Server for Joern.
 
+<a href="https://glama.ai/mcp/servers/@sfncat/mcp-joern">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@sfncat/mcp-joern/badge" alt="Joern Server MCP server" />
+</a>
+
 ## Project Introduction
 
 This project is an MCP Server based on Joern, providing a series of features to help developers with code review and security analysis.
