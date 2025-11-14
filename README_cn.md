@@ -49,9 +49,29 @@
    或
    joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools_source.sc
    ```
-   如果是在Windows下使用,可能需要通过命令行或在系统环境变量中设置JVM系统变量
+   如果是在Windows下使用,可能需要通过命令行或在系统环境变量中设置JVM系统变量解决加载脚本失败的问题
    ```
    set _JAVA_OPTIONS=-Dfile.encoding=UTF-8
+   ```
+   设置joern通用日志级别
+   ```
+   set SL_LOGGING_LEVEL=ERROR //windows
+   export SL_LOGGING_LEVEL=ERROR //linux
+   ```
+   如果有下面的告警
+
+   ```
+   Unable to create a system terminal, creating a dumb terminal (enable debug logging for more information)
+   ```
+   可以通过设置环境变量关闭
+   ```
+   set TERM=dumb
+   export TERM=dumb
+   ```
+   恢复
+   ```
+   set TERM=xterm-256color
+   export TERM=xterm-256color
    ```
 2. 复制env_example.txt为.env
    修改配置信息和joern server启动配置的信息一致

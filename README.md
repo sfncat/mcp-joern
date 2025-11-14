@@ -59,6 +59,26 @@ This project is an MCP Server based on Joern, providing a series of features to 
    ```
    set _JAVA_OPTIONS=-Dfile.encoding=UTF-8
    ```
+   set joern logging level to ERROR
+   ```
+   set SL_LOGGING_LEVEL=ERROR //windows
+   export SL_LOGGING_LEVEL=ERROR //linux
+   ```
+   if you have the following warning
+
+   ```
+   Unable to create a system terminal, creating a dumb terminal (enable debug logging for more information)
+   ```
+   you can disable it by setting the environment variable
+   ```
+   set TERM=dumb
+   export TERM=dumb
+   ```
+   to restore the default behavior
+   ```
+   set TERM=xterm-256color
+   export TERM=xterm-256color
+   ```
 2. Copy env_example.txt to .env
    Modify the configuration information to match the joern server startup configuration
 
