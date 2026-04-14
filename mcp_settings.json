@@ -17,7 +17,10 @@
         "get_parent_classes_by_class_full_name",
         "get_method_by_call_id",
         "get_referenced_method_full_name_by_call_id",
-        "get_calls_in_method_by_method_full_name"
+        "get_calls_in_method_by_method_full_name",
+        "find_flows_from_method_params_to_sink_method",
+        "find_flows_from_source_call_to_sink_call",
+        "find_flows_from_param_index_to_sink_call"
       ],
       "disabled": false,
       "command": "uv",
