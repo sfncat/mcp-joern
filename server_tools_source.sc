@@ -276,12 +276,12 @@ def format_flow_step(node: nodes.StoredNode): String = {
   @param node: A CPG node in a flow path
   @return: Formatted string with type, code, line and id fields
   */
-  val code = node.property(PropertyNames.CODE, "").toString
+  import scala.util.Try
+  val code = Try(node.property[String](PropertyNames.CODE)).getOrElse("")
     .replaceAll("[\n\r\t]", " ")
     .replace("\"", "'")
     .replace("|", "/")
-  val line = node.propertyOption(PropertyNames.LINE_NUMBER)
-    .map(_.toString).getOrElse("?")
+  val line = Try(node.property[Integer](PropertyNames.LINE_NUMBER)).map(_.toString).getOrElse("?")
   s"type=${node.label}|code=${code}|line=${line}|id=${node.id}L"
 }
 
