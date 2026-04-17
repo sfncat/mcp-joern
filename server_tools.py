@@ -186,3 +186,71 @@ def get_calls_in_method_by_method_full_name(method_full_name:str) -> list[str]:
     """
     response = joern_remote(f'get_calls_in_method_by_method_full_name("{method_full_name}")')
     return extract_list(response)
+
+@joern_mcp.tool()
+def find_flows_from_method_params_to_sink_method(
+    source_method_full_name: str,
+    sink_method_full_name: str,
+    max_paths: int = 20
+) -> list[str]:
+    """Find taint flow paths from ALL parameters of a source method to calls of a sink method.
+    Use this to check if a method's input can reach a dangerous operation.
+    Each returned string describes one complete path with steps in the form:
+    step0:(type=...|code=...|line=...|id=...) --> step1:(...) --> ...
+    Note: This query may take minutes for large CPGs.
+
+    @param source_method_full_name: Full name of source method (e.g., com.example.Foo.onReceive:void(android.content.Context,android.content.Intent))
+    @param sink_method_full_name: Full name of sink method, exact match (e.g., java.lang.Runtime.exec:Process(String))
+    @param max_paths: Maximum number of flow paths to return (default 20)
+    @return: List of flow path strings, each showing steps from source parameter to sink argument
+    """
+    response = joern_remote(
+        f'find_flows_from_method_params_to_sink_method("{source_method_full_name}", "{sink_method_full_name}", {max_paths})'
+    )
+    return extract_list(response)
+
+@joern_mcp.tool()
+def find_flows_from_source_call_to_sink_call(
+    source_call_name: str,
+    sink_call_name: str,
+    max_paths: int = 20
+) -> list[str]:
+    """Find taint flow paths from return values of calls named source_call_name to calls named sink_call_name.
+    Uses simple name matching (covers all overloads). Useful for Android Intent data tracing.
+    Each returned string describes one complete path with steps in the form:
+    step0:(type=...|code=...|line=...|id=...) --> step1:(...) --> ...
+    Note: This query may take minutes for large CPGs.
+
+    @param source_call_name: Simple method name of source call (e.g., 'getStringExtra', 'getIntExtra')
+    @param sink_call_name: Simple method name of sink call (e.g., 'exec', 'query', 'openFile')
+    @param max_paths: Maximum number of flow paths to return (default 20)
+    @return: List of flow path strings, each showing steps from source to sink
+    """
+    response = joern_remote(
+        f'find_flows_from_source_call_to_sink_call("{source_call_name}", "{sink_call_name}", {max_paths})'
+    )
+    return extract_list(response)
+
+@joern_mcp.tool()
+def find_flows_from_param_index_to_sink_call(
+    source_method_full_name: str,
+    param_index: int,
+    sink_call_name: str,
+    max_paths: int = 20
+) -> list[str]:
+    """Find taint flow paths from a specific parameter (by 0-based index) to calls with a given name.
+    Use this when you know which specific parameter carries tainted data.
+    Each returned string describes one complete path with steps in the form:
+    step0:(type=...|code=...|line=...|id=...) --> step1:(...) --> ...
+    Note: This query may take minutes for large CPGs.
+
+    @param source_method_full_name: Full name of the source method
+    @param param_index: 0-based index of the parameter (0 = first param)
+    @param sink_call_name: Simple method name of the sink call (e.g., 'exec', 'query')
+    @param max_paths: Maximum number of flow paths to return (default 20)
+    @return: List of flow path strings, each showing steps from the parameter to sink
+    """
+    response = joern_remote(
+        f'find_flows_from_param_index_to_sink_call("{source_method_full_name}", {param_index}, "{sink_call_name}", {max_paths})'
+    )
+    return extract_list(response)
