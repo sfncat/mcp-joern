@@ -29,7 +29,13 @@ joern_config = load_server_config()
 # server_endpoint = f'{os.getenv("HOST")}:{os.getenv("PORT")}'
 server_endpoint = f'{joern_config.get('host')}:{joern_config.get("port")}'
 log_level = joern_config.get('log_level', 'ERROR')
-joern_mcp = FastMCP("joern-mcp", log_level=log_level)
+# fastmcp >= 2.x removed the log_level constructor arg; use env var instead.
+# Keep the old-style call as fallback for fastmcp 1.x.
+os.environ.setdefault('FASTMCP_LOG_LEVEL', log_level)
+try:
+    joern_mcp = FastMCP("joern-mcp", log_level=log_level)
+except TypeError:
+    joern_mcp = FastMCP("joern-mcp")
 # joern_mcp._tool_manager.
 print(server_endpoint)
 basic_auth = (os.getenv("JOERN_AUTH_USERNAME"), os.getenv("JOERN_AUTH_PASSWORD"))

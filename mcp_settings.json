@@ -26,16 +26,16 @@
       "command": "uv",
       "args": [
         "--directory",
-        "/home/kali/ssd/workspace/mcp-joern",
+        ".",
         "run",
         "server.py"
       ],
       "transportType": "stdio",
       "description": "Joern mcp server",
       "config": {
-        "host":"127.0.0.1",
-        "port":"16162",
-        "log_level":"ERROR",
+        "host": "127.0.0.1",
+        "port": "16162",
+        "log_level": "ERROR",
         "timeout": 1800
       }
     }
@@ -60,4 +60,4 @@
       }
     }
   }
-} 
+}
