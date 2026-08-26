@@ -277,11 +277,18 @@ def format_flow_step(node: nodes.StoredNode): String = {
   @return: Formatted string with type, code, line and id fields
   */
   import scala.util.Try
-  val code = Try(node.property[String](PropertyNames.CODE)).getOrElse("")
+  // PropertyNames constants were renamed in newer CPG versions (CODE -> Code, LINE_NUMBER -> LineNumber).
+  // Resolve via reflection so server_tools.sc compiles against both old and new joern versions.
+  val PN = io.shiftleft.codepropertygraph.generated.PropertyNames
+  val codePropName: String = Try(PN.getClass.getMethod("Code").invoke(null).asInstanceOf[String])
+    .getOrElse(Try(PN.getClass.getMethod("CODE").invoke(null).asInstanceOf[String]).getOrElse("CODE"))
+  val linePropName: String = Try(PN.getClass.getMethod("LineNumber").invoke(null).asInstanceOf[String])
+    .getOrElse(Try(PN.getClass.getMethod("LINE_NUMBER").invoke(null).asInstanceOf[String]).getOrElse("LINE_NUMBER"))
+  val code = Try(node.property[String](codePropName)).getOrElse("")
     .replaceAll("[\n\r\t]", " ")
     .replace("\"", "'")
     .replace("|", "/")
-  val line = Try(node.property[Integer](PropertyNames.LINE_NUMBER)).map(_.toString).getOrElse("?")
+  val line = Try(node.property[Integer](linePropName)).map(_.toString).getOrElse("?")
   s"type=${node.label}|code=${code}|line=${line}|id=${node.id}L"
 }
 
