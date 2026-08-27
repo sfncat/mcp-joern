@@ -57,10 +57,12 @@ def get_call_info_by_id(id:Long): String = {
   /*Get the info of a call by its id
 
   @param id: The id of the call 
-  @return: The info of the call, including the code and id
+  @return: The info of the call, including the code, line and id
   */
+  import scala.util.Try
   val call = cpg.call.id(id).head
-  s"call_code=${call.code}|call_id=${call.id}L"
+  val line = Try(call.lineNumber.map(_.toString).getOrElse("?")).getOrElse("?")
+  s"call_code=${call.code}|call_line=${line}|call_id=${call.id}L"
 }
 
 def _get_classes(class_full_name: String, visited: mutable.Set[String] = mutable.Set()): List[nodes.TypeDecl] = {
@@ -132,7 +134,10 @@ def get_method_callees(method_full_name: String): List[String] = {
   @param method_full_name: The fully qualified name of the source method(e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
   @return: List of full name, name, signature and id of methods which call the source method
   */
-  cpg.method.fullNameExact(method_full_name).head.callee.distinct.map(m => get_method_info_by_id(m.id)).l
+  cpg.method.fullNameExact(method_full_name).headOption match {
+    case Some(m) => m.callee.distinct.map(m => get_method_info_by_id(m.id)).l
+    case None => List(s"ERROR: method not found: ${method_full_name}")
+  }
 }
 
 def get_method_callers(method_full_name: String): List[String] = {
@@ -141,7 +146,10 @@ def get_method_callers(method_full_name: String): List[String] = {
   @param method_full_name: The fully qualified name of the source method(e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
   @return: List of full name, name, signature and id of methods called by the source method
   */
-  cpg.method.fullNameExact(method_full_name).head.caller.distinct.map(m => get_method_info_by_id(m.id)).l
+  cpg.method.fullNameExact(method_full_name).headOption match {
+    case Some(m) => m.caller.distinct.map(m => get_method_info_by_id(m.id)).l
+    case None => List(s"ERROR: method not found: ${method_full_name}")
+  }
 }
 
 def get_class_full_name_by_id(id: String): String = {
@@ -169,7 +177,10 @@ def get_method_code_by_method_full_name(method_full_name: String): String = {
   @param method_full_name: The fully qualified name of the method
   @return: The code of the method
   */
-  cpg.method.fullNameExact(method_full_name).head.code
+  cpg.method.fullNameExact(method_full_name).headOption match {
+    case Some(m) => m.code
+    case None => s"ERROR: method not found: ${method_full_name}"
+  }
 }
 
 def get_method_code_by_id(id: String): String = {
@@ -200,13 +211,60 @@ def get_call_code_by_id(id: String): String = {
 }
 
 def get_method_code_by_class_full_name_and_method_name(class_full_name: String, method_name: String): List[String] = {
-  /*Get the code of a method by its class full name and method name
-  
+  /*Get the code of a method by its class full name and method name.
+  Exact match first; falls back to case-insensitive substring match with a
+  result cap (10) and explicit error messages when nothing is found.
+
   @param class_full_name: The fully qualified name of the class
-  @param method_name: The name of the method
-  @return: List of full name, name, signature and id of methods in the class
+  @param method_name: The name of the method (exact or substring)
+  @return: List of method info strings, or an ERROR/INFO message
   */
-  cpg.typeDecl.filter(_.fullName == class_full_name).head.method.filter(_.name == method_name).map(m => (s"methodFullName=${m.fullName} methodId=${m.id}L")).l
+  cpg.typeDecl.filter(_.fullName == class_full_name).headOption match {
+    case None => List(s"ERROR: class not found: ${class_full_name}")
+    case Some(td) =>
+      val all = td.method.l
+      val exact = all.filter(_.name == method_name)
+      if (exact.nonEmpty) {
+        exact.map(m => (s"methodFullName=${m.fullName} methodId=${m.id}L")).l
+      } else {
+        // Level 1: case-insensitive substring match
+        val lname = method_name.toLowerCase
+        val fuzzy = all.filter(_.name.toLowerCase.contains(lname))
+        if (fuzzy.nonEmpty) {
+          if (fuzzy.size <= 10) {
+            fuzzy.map(m => (s"[fuzzy] methodFullName=${m.fullName} methodId=${m.id}L")).l
+          } else {
+            fuzzy.take(10).map(m => (s"[fuzzy] methodFullName=${m.fullName} methodId=${m.id}L")).l :+
+              s"INFO: ${fuzzy.size} methods match '${method_name}', showing first 10. Use exact name for precise result."
+          }
+        } else {
+          // Level 2: Levenshtein edit-distance fallback for typos (e.g. doSUexist -> doesSUexist)
+          def levenshtein(a: String, b: String): Int = {
+            val m = a.length; val n = b.length
+            val dp = Array.ofDim[Int](m + 1, n + 1)
+            for (i <- 0 to m) dp(i)(0) = i
+            for (j <- 0 to n) dp(0)(j) = j
+            for (i <- 1 to m; j <- 1 to n) {
+              dp(i)(j) = math.min(
+                math.min(dp(i-1)(j) + 1, dp(i)(j-1) + 1),
+                dp(i-1)(j-1) + (if (a(i-1) == b(j-1)) 0 else 1)
+              )
+            }
+            dp(m)(n)
+          }
+          val threshold = math.max(2, lname.length / 3)
+          val close = all.map(m => (m, levenshtein(m.name.toLowerCase, lname)))
+                       .filter { case (_, d) => d <= threshold }
+                       .sortBy { case (_, d) => d }
+                       .take(10)
+          if (close.nonEmpty) {
+            close.map { case (m, d) => s"[typo? dist=$d] methodFullName=${m.fullName} methodId=${m.id}L" }.l
+          } else {
+            List(s"ERROR: no method containing or similar to '${method_name}' in ${class_full_name}")
+          }
+        }
+      }
+  }
 }
 
 def get_method_by_full_name_without_signature(full_name_without_signature: String): List[String] = {
@@ -224,7 +282,10 @@ def get_derived_classes_by_class_full_name(class_full_name: String): List[String
   @param class_full_name: The fully qualified name of the class
   @return: The derived classes info of the class, including the full name, name and id
   */
-  cpg.typeDecl.filter(_.fullName == class_full_name).head.derivedTypeDeclTransitive.map(c => get_class_info_by_id(c.id)).l
+  cpg.typeDecl.filter(_.fullName == class_full_name).headOption match {
+    case Some(td) => td.derivedTypeDeclTransitive.map(c => get_class_info_by_id(c.id)).l
+    case None => List(s"ERROR: class not found: ${class_full_name}")
+  }
 }
 
 def get_parent_classes_by_class_full_name(class_full_name: String): List[String] = {
@@ -260,8 +321,10 @@ def get_calls_in_method_by_method_full_name(method_full_name: String): List[Stri
   @param method_full_name: The fully qualified name of the method
   @return: The calls info in the method, including the code and id
    */
-  val method = cpg.method.filter(_.fullName == method_full_name).head
-  method.ast.isCall.collect(c => get_call_info_by_id(c.id)).l
+  cpg.method.filter(_.fullName == method_full_name).headOption match {
+    case Some(method) => method.ast.isCall.collect(c => get_call_info_by_id(c.id)).l
+    case None => List(s"ERROR: method not found: ${method_full_name}")
+  }
 }
 
 // ===== Script version (used to detect mismatch between Python MCP and Joern script) =====
