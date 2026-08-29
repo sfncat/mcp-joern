@@ -97,6 +97,23 @@ def check_connection() -> str:
     except Exception as e:
         return f"Failed to connect to Joern MCP! Make sure the Joern MCP server is running."
 
+
+@joern_mcp.tool()
+def run_query(query: str) -> str:
+    """Execute a raw Joern query on the Joern server
+    
+    Parameters:
+    query -- The Joern query string to execute
+    
+    Returns:
+    The query result as a string, or error message if the query fails
+    """
+    result = joern_remote(query)
+    if result:
+        return result
+    else:
+        return "Query execution failed or returned no output"
+
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 GENERATED_PY = os.path.join(SCRIPT_DIR, "server_tools.py")
 def generate():
