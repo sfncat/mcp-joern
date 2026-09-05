@@ -83,29 +83,24 @@ def _get_classes(class_full_name: String, visited: mutable.Set[String] = mutable
   }
 def load_cpg(cpg_filepath: String) :Boolean = {
     /*
-    Loads a CPG from a file if the cpg is not loaded or the cpg is not the same as the filepath
-    
+    Loads a CPG from a file if the cpg is not loaded or the cpg is not the same as the filepath.
+    Uses importCpg so the CPG is registered in the workspace as well: the bare REPL `cpg`
+    (the console workspace accessor) and this script var `cpg` then point to the SAME object.
+    importCpg is idempotent per path: re-importing the same file returns the same project Cpg.
+
     @param cpg_filepath: The path to the CPG file, the filepath is absolute path
     @return: True if the CPG is loaded successfully, False otherwise
     */
     try{
-      if (cpg == null) {
-          println(s"Loading CPG from ${cpg_filepath}")
-          cpg = CpgLoader.load(cpg_filepath)
-          return true
+      val loaded = io.joern.joerncli.console.Joern.importCpg(cpg_filepath).getOrElse(
+        throw new RuntimeException(s"importCpg returned None for ${cpg_filepath}"))
+      if (cpg == null || !(cpg eq loaded)) {
+          println(s"Loading CPG from ${cpg_filepath}" + (if (cpg == null) "" else " (replace old cpg)"))
+          cpg = loaded
       }else{
-        val cur_cpg_filepath = get_cpg_filepath()
-
-        if (cur_cpg_filepath != cpg_filepath) {
-          println(s"Loading CPG from ${cpg_filepath} replace the old cpg")
-          cpg = CpgLoader.load(cpg_filepath)
-          return true
-        }else{
           println(s"CPG already loaded from ${cpg_filepath}")
-          return true
-        }
       }
-    
+      return true
     }catch{
       case e: Exception => {
         println(s"Error loading CPG from ${cpg_filepath}: ${e.getMessage}")
@@ -113,6 +108,15 @@ def load_cpg(cpg_filepath: String) :Boolean = {
       }
     }
   }
+
+def get_loaded_cpg(): Cpg = cpg
+    /*REPL-side accessor to this script var `cpg`.
+    Bare `cpg` typed in the REPL resolves to the console built-in workspace accessor
+    (errors with "No projects loaded" when no project is open), shadowing this var.
+    Use get_loaded_cpg().method... etc. to query the loaded CPG with arbitrary Scala.
+
+    @return: The CPG loaded via load_cpg
+    */
 def get_cpg_filepath(): String = {
   /*Get the filepath of the CPG
   
