@@ -37,7 +37,7 @@ def load_cpg(cpg_filepath: str) -> str:
 def get_method_callees(method_full_name: str) -> list[str]:
     """Retrieves a list of methods info that are called by the specified method
     
-   @param method_full_name: The fully qualified name of the source method(e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
+   @param method_full_name: The fully qualified name of the source method(e.g., com.example.fixture.AccountReceiver.handleBroadCastReceive:void(android.content.Context,android.content.Intent))
    @return: List of full name, name, signature and id of methods which call the source method
     """
     # responses =  joern_remote(f'cpg.method.fullNameExact("{method_full_name}").head.callee.distinct.map(m => (s"methodFullName=$' + '{m.fullName} methodId=${m.id}L")).l')
@@ -48,7 +48,7 @@ def get_method_callees(method_full_name: str) -> list[str]:
 def get_method_callers(method_full_name: str) -> list[str]:
     """Retrieves a list of methods that call the specified method
     
-    @param method_full_name: The fully qualified name of the source method(e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
+    @param method_full_name: The fully qualified name of the source method(e.g., com.example.fixture.AccountReceiver.handleBroadCastReceive:void(android.content.Context,android.content.Intent))
     @return: List of full name, name, signature and id of methods called by the source method
     """
     responses = joern_remote(f'get_method_callers("{method_full_name}")')
@@ -59,7 +59,7 @@ def get_class_full_name_by_id(class_id:str) -> str:
     """Retrieves the fully name of a class by its ID
     
     @param id: The unique identifier of the class (typeDecl), the id is a Long int string, like '111669149702L'
-    @return: The fully name of the class (e.g., com.android.nfc.NfcService$6)
+    @return: The fully name of the class (e.g., com.example.fixture.AccountReceiver)
     """
     response =  joern_remote(f'get_class_full_name_by_id("{class_id}")')
     return extract_value(response)
@@ -78,7 +78,7 @@ def get_class_methods_by_class_full_name(class_full_name:str) -> list[str]:
 def get_method_code_by_full_name(method_full_name:str) -> str:
     """Get the code of a method by its fully name, If you know the full name of the method, you can use this tool to get the method code directly. 
     If you only know the full name of the class and the name of the method, you should use get_method_code_by_class_full_name_and_method_name
-    @param method_full_name: The fully qualified name of the method (e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
+    @param method_full_name: The fully qualified name of the method (e.g., com.example.fixture.AccountReceiver.handleBroadCastReceive:void(android.content.Context,android.content.Intent))
     @return: The source code of the specified method
     """
     response = joern_remote(f'get_method_code_by_method_full_name("{method_full_name}")')
@@ -100,7 +100,7 @@ def get_method_full_name_by_id(method_id:str) -> str:
     """Retrieves the fully qualified name of a method by its ID
     
     @param id: The unique identifier of the method, the id is a Long int string, like '111669149702L'
-    @return: The fully qualified name of the method (e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
+    @return: The fully qualified name of the method (e.g., com.example.fixture.AccountReceiver.handleBroadCastReceive:void(android.content.Context,android.content.Intent))
     """
     response = joern_remote(f'get_method_full_name_by_id("{method_id}")')
     return extract_value(response)
@@ -120,7 +120,7 @@ def get_method_code_by_class_full_name_and_method_name(class_full_name:str, meth
     """Get the code of a method by its class full name and method name,
     this tool is usually used when you don't know the full name of the method, but you know the full name of the class and the name of the method. If there are multiple methods with the same name in the class, the code of all methods will be returned.
   
-    @param class_full_name: The fully qualified name of the class, like 'com.android.nfc.NfcService'
+    @param class_full_name: The fully qualified name of the class, like 'com.example.fixture.AccountReceiver'
     @param method_name: The name of the method, like 'onReceive'
     @return: List of full name, name, signature and id of methods in the class
     """
@@ -131,7 +131,7 @@ def get_method_code_by_class_full_name_and_method_name(class_full_name:str, meth
 # def get_method_by_full_name_without_signature(full_name_without_signature:str) -> list[str]:
 #     """Get the info of a method list by its fully qualified name without signature
     
-#     @param full_name_without_signature: fully qualified name of methodwithout signature,like com.android.nfc.NfcService.onReceive
+#     @param full_name_without_signature: fully qualified name of methodwithout signature,like com.example.fixture.AccountReceiver.handleBroadCastReceive
 #     @return: The info of the methods, including the full name, name, signature and id
 #     """
 #     response = joern_remote(f'get_method_by_full_name_without_signature("{full_name_without_signature}")')

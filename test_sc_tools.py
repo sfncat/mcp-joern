@@ -53,5 +53,5 @@ def get_calls_in_method_by_method_full_name(method_full_name:str) -> list[str]:
     response = joern_remote(f'get_calls_in_method_by_method_full_name("{method_full_name}")')
     return extract_list(response)
 if __name__ == "__main__":
-    method_full_name = "com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent)"
+    method_full_name = "com.example.fixture.AccountReceiver.handleBroadCastReceive:void(android.content.Context,android.content.Intent)"
     print(get_calls_in_method_by_method_full_name(method_full_name))

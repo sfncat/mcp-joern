@@ -162,3 +162,24 @@ https://docs.joern.io/interpreter/
 - 代码注释一律英文；中文只保留在 `README_cn.md` 与 `prompts_cn.md`。
 - `.gitignore` 增加 `*.cpg`、`*.bak-*` 与本机凭据包装脚本 `run_verify.sh`。
 - 版本号升级到 1.2.0。
+
+### v1.3.0 (2026-09-10)
+
+- 新增 `tests/fixture/`：自带 Android 样例工程（构造好的源码 + `build_fixture.sh`），按
+  **API 36 / SDK 扩展级别 17** 编译出约 12 KB 的 APK 及对应 CPG。每个曾让工具链出错的形态都
+  恰好出现一次：业务入口非 `onReceive` 的自定义基类 receiver、跨类且经接口的 4 跳调用链、
+  同名方法（三处）、匿名内部类、链尾 `SharedPreferences` 写入（`hd_member`）、应被链工具跳过的
+  框架调用、带权限门禁的 receiver。
+- `test_mcp_client.py` 改为基于该样例的**断言式回归测试**：覆盖链式/索引工具、原有查询与错误
+  路径，失败即非零退出；原先临时的 `verify_mcp.py` 已合并进来。
+- 样例 APK 的版本号与本包（`pyproject.toml`）一致，`tests/fixture/fixture.apk`、`fixture.cpg`
+  随服务端版本一起走。
+- 文档与工具帮助里的旧 NFC 示例全部替换为样例内容。
+- 版本 1.2.0 -> 1.3.0。
+
+## 测试
+
+```bash
+cd tests/fixture && ./build_fixture.sh --cpg   # 生成 fixture.apk + fixture.cpg
+cd ../.. && uv run test_mcp_client.py          # 协议级回归测试
+```

@@ -21,3 +21,10 @@ wheels/
 
 # Local credential-injecting wrapper for verify_mcp.py (machine-specific, not for commit)
 run_verify.sh
+
+# fixture build output
+tests/fixture/out/
+
+# fixture: the built apk/cpg are committed, the rest of the build tree is not
+!tests/fixture/fixture.apk
+!tests/fixture/fixture.cpg

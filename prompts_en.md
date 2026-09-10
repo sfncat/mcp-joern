@@ -1,8 +1,8 @@
 ## Information
-1. cpg_filepath = /home/user/cpg/com.android.nfc.cpg  
-2. class_full_name = com.android.nfc.NfcService$6
+1. cpg_filepath = /path/to/mcp-joern/tests/fixture/fixture.cpg  
+2. class_full_name = com.example.fixture.AccountReceiver
 ## Processing Requirements
-1. Review the code of the onReceive method in the current class, analyze the code logic, and examine the handling logic for different Actions.
+1. Review the code of the handleBroadCastReceive method in the current class, analyze the code logic, and examine the handling logic for different Actions.
 2. If different Action handlers call other methods, continue to review the code of the called methods, and if necessary, continue analyzing subsequent called methods.
 3. For Action handlers with security risks, describe the complete handling logic, focus on whether parameters are obtained from the intent and how they are processed, and pay attention to sensitive operations or sensitive information.
 4. If security vulnerabilities exist, describe in detail the possible causes of the vulnerabilities, provide the vulnerability-related code, and generate Intent data that can reach the vulnerable branch.

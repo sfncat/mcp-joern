@@ -1,6 +1,6 @@
 ## 信息
-1. cpg_filepath = /home/user/cpg/com.android.nfc.cpg  
-2. class_full_name = com.android.nfc.NfcService$6
+1. cpg_filepath = /path/to/mcp-joern/tests/fixture/fixture.cpg  
+2. class_full_name = com.example.fixture.AccountReceiver
 ## 处理要求
 1. 查看当前class下的onReceive方法的代码，分析代码逻辑，查看针对不同的Action的处理逻辑。
 2. 如果不同Action的处理调用其它方法，继续查看调用的方法的代码,如果有需要,可以继续分析后续调用的方法。

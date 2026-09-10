@@ -69,7 +69,7 @@ def _get_classes(class_full_name: String, visited: mutable.Set[String] = mutable
     /*Retrieves a list of anonymous classes defined within a class
 
     @param cpg: The CPG to query
-    @param class_full_name: The fully qualified name of the class (e.g., com.android.nfc.NfcService)
+    @param class_full_name: The fully qualified name of the class (e.g., com.example.fixture.AccountReceiver)
     @return: List of full name and id of classes which are anonymous classes in the source class
     */
     if (visited.contains(class_full_name)) return List()
@@ -135,7 +135,7 @@ def get_cpg_filepath(): String = {
 def get_method_callees(method_full_name: String): List[String] = {
   /*Get the callees of a method
   
-  @param method_full_name: The fully qualified name of the source method(e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
+  @param method_full_name: The fully qualified name of the source method(e.g., com.example.fixture.AccountReceiver.handleBroadCastReceive:void(android.content.Context,android.content.Intent))
   @return: List of full name, name, signature and id of methods which call the source method
   */
   cpg.method.fullNameExact(method_full_name).headOption match {
@@ -147,7 +147,7 @@ def get_method_callees(method_full_name: String): List[String] = {
 def get_method_callers(method_full_name: String): List[String] = {
   /*Get the callees of a method
   
-  @param method_full_name: The fully qualified name of the source method(e.g., com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent))
+  @param method_full_name: The fully qualified name of the source method(e.g., com.example.fixture.AccountReceiver.handleBroadCastReceive:void(android.content.Context,android.content.Intent))
   @return: List of full name, name, signature and id of methods called by the source method
   */
   cpg.method.fullNameExact(method_full_name).headOption match {

@@ -174,3 +174,27 @@ https://docs.joern.io/interpreter/
 - `.gitignore`: ignore local CPG artifacts (`*.cpg`), backups (`*.bak-*`) and the local
   credential-injecting `run_verify.sh` wrapper.
 - Version bumped to 1.2.0.
+
+### v1.3.0 (2026-09-10)
+
+- `tests/fixture/`: a self-contained Android fixture (crafted sources + `build_fixture.sh`)
+  that builds a ~12 KB APK against **API 36 / SDK extension level 17** and the matching CPG.
+  Every construct that has broken the tooling before is present exactly once: a custom base
+  receiver whose business entry is `handleBroadCastReceive()` (not `onReceive`), a 4-hop
+  delegation chain across classes and an interface, a duplicated simple method name, an
+  anonymous inner class, a `SharedPreferences` write (`hd_member`) at the chain end,
+  framework calls the chain tool must skip, and a permission-gated receiver.
+- `test_mcp_client.py` is now an assertion-based regression gate over that fixture: it
+  checks the chain/lookup tools, the legacy queries and the error path, and exits non-zero
+  on failure. The ad-hoc `verify_mcp.py` was merged into it.
+- The fixture APK carries the same version as this package (`pyproject.toml`), so
+  `tests/fixture/fixture.apk` and `fixture.cpg` are versioned together with the server.
+- Documentation and tool help no longer use the old NFC sample; they use the fixture.
+- Version 1.2.0 -> 1.3.0.
+
+## Tests
+
+```bash
+cd tests/fixture && ./build_fixture.sh --cpg   # fixture.apk + fixture.cpg
+cd ../.. && uv run test_mcp_client.py          # protocol-level regression gate
+```

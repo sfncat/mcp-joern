@@ -1,274 +1,189 @@
-import os
+#!/usr/bin/env python3
+"""Protocol-level test client for the joern MCP server.
+
+Starts ``server.py`` (same directory) over stdio and exercises the MCP tools against
+the bundled **fixture CPG** (``tests/fixture/fixture.cpg``, built by
+``tests/fixture/build_fixture.sh``), asserting the results. Prints a PASS/FAIL line per
+check and exits non-zero if any check fails, so it works as a regression gate.
+
+Usage
+-----
+    uv run test_mcp_client.py                          # fixture cpg + ./server.py
+    uv run test_mcp_client.py --cpg other.cpg          # any other CPG
+    python  test_mcp_client.py --server ../server.py    # explicit server path
+
+The fixture carries one instance of every construct that has bitten the tooling:
+a custom base receiver whose business entry is ``handleBroadCastReceive()`` (not
+``onReceive``), a 4-hop delegation chain across classes and an interface, a duplicated
+simple method name, an anonymous inner class, a SharedPreferences write (``hd_member``)
+at the end of the chain, framework calls to be skipped, and a permission-gated receiver.
+"""
+import argparse
 import asyncio
-from dotenv import load_dotenv
+import os
+import re
+import sys
+
 from fastmcp import Client
 from fastmcp.client.transports import PythonStdioTransport
 
-async def test_connection(client):
-    """Test server connection"""
-    print("Testing [check_connection] server connection...")
-    try:
-        result = await client.call_tool("check_connection")
-        print(f"Connection test result: {result[0].text}")
-        return True
-    except Exception as e:
-        print(f"Connection test failed: {str(e)}")
-        return False
+HERE = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_SERVER = os.path.join(HERE, "server.py")
+DEFAULT_CPG = os.path.join(HERE, "tests", "fixture", "fixture.cpg")
 
-async def test_ping(client):
-    """Test ping functionality"""
-    print("Testing [ping] ping...")
-    try:
-        result = await client.call_tool("ping")
-        print(f"Ping result: {result[0].text}")
-        return True
-    except Exception as e:
-        print(f"Ping test failed: {str(e)}")
-        return False
+# fixture anchors
+CLS = "com.example.fixture.AccountReceiver"
+BASE = "com.example.fixture.SafeReceiverBase"
+ENTRY = CLS + ".handleBroadCastReceive:void(android.content.Context,android.content.Intent)"
+INNER = "com.example.fixture.SilentInstallReceiver$1"
 
-async def test_load_cpg(client, cpg_path):
-    """Test loading CPG file"""
-    print("Testing [load_cpg] CPG file loading...")
-    try:
-        result = await client.call_tool("load_cpg", {"cpg_filepath": cpg_path})
-        print(f"CPG loading result: {result[0].text}")
-        return True
-    except Exception as e:
-        print(f"CPG loading failed: {str(e)}")
-        return False
-
-async def test_method_info_queries(client, method_full_name, method_id, full_name_without_signature):
-    """Test method-related queries"""
-    print("Testing method queries...")
-    success = True
-    
-    try:
-        # Test getting method callers
-        print("Testing [get_method_callers] get method callers...")
-        callers = await client.call_tool("get_method_callers", {"method_full_name": method_full_name})
-        if callers:
-            print(f"Method callers: {callers[0].text}")
-        else:
-            print(f"Method callers: []")
-    except Exception as e:
-        print(f"Failed to get method callers: {str(e)}")
-        success = False
-    
-    try:
-        # Test getting method callees
-        print("Testing [get_method_callees] get method callees...")
-        callees = await client.call_tool("get_method_callees", {"method_full_name": method_full_name})
-        if callees:
-            print(f"Method callees: {callees[0].text}")
-        else:
-            print(f"Method callees: []")
-    except Exception as e:
-        print(f"Failed to get method callees: {str(e)}")
-        success = False
-
-    try:
-        # Test getting method full name by ID
-        print("Testing [get_method_full_name_by_id] get method full name by ID...")
-        full_name = await client.call_tool("get_method_full_name_by_id", {"id": method_id})
-        print(f"Method full name: {full_name[0].text}")
-    except Exception as e:
-        print(f"Failed to get method full name: {str(e)}")
-        success = False   
+RESULTS = []
 
 
-    try:
-        # Test getting method by full name without signature
-        print("Testing [get_method_by_full_name_without_signature] get method by full name without signature...")
-        method = await client.call_tool("get_method_by_full_name_without_signature", {"full_name_without_signature": full_name_without_signature})
-        print(f"Method info: {method[0].text}")
-    except Exception as e:
-        print(f"Failed to get method info: {str(e)}")
-        success = False
-    
-    return success
-
-async def test_class_info_queries(client, class_full_name):
-    """Test class-related queries"""
-    print("Testing class queries...")
-    success = True
-    
-    try:
-        # Test getting class methods
-        print("Testing [get_class_methods_by_class_full_name] get class methods...")
-        methods = await client.call_tool("get_class_methods_by_class_full_name", {"class_full_name": class_full_name})
-        if methods:
-            print(f"Class methods: {methods[0].text}")
-        else:
-            print(f"Class methods: []")
-    except Exception as e:
-        print(f"Failed to get class methods: {str(e)}")
-        success = False
-    
-    try:
-        # Test getting derived classes
-        print("Testing [get_derived_classes_by_class_full_name] get derived classes...")
-        derived = await client.call_tool("get_derived_classes_by_class_full_name", {"class_full_name": class_full_name})
-        if derived:
-            print(f"Derived classes: {derived[0].text}")
-        else:
-            print(f"Derived classes: []")
-    except Exception as e:
-        print(f"Failed to get derived classes: {str(e)}")
-        success = False
-    
-    try:
-        # Test getting parent classes
-        print("Testing [get_parent_classes_by_class_full_name] get parent classes...")
-        parents = await client.call_tool("get_parent_classes_by_class_full_name", {"class_full_name": class_full_name})
-        if parents:
-            print(f"Parent classes: {parents[0].text}")
-        else:
-            print(f"Parent classes: []")
-    except Exception as e:
-        print(f"Failed to get parent classes: {str(e)}")
-        success = False
-    
-    return success
-
-async def test_call_info_queries(client, call_id, method_full_name):
-    """Test call-related queries"""
-    print("\nTesting call queries...")
-    success = True
-    
-    try:
-        # Test getting call code
-        print("Testing [get_call_code_by_id] get call code...")
-        code = await client.call_tool("get_call_code_by_id", {"id": call_id})
-        print(f"Call code: {code[0].text}")
-    except Exception as e:
-        print(f"Failed to get call code: {str(e)}")
-        success = False
-    
-    try:
-        # Test getting method by call ID
-        print("Testing [get_method_by_call_id] get method by call ID...")
-        method = await client.call_tool("get_method_by_call_id", {"id": call_id})
-        print(f"Method info: {method[0].text}")
-    except Exception as e:
-        print(f"Failed to get method by call ID: {str(e)}")
-        success = False
-    
-    try:
-        # Test getting referenced method full name
-        print("Testing [get_referenced_method_full_name_by_call_id] get referenced method full name...")
-        ref_method = await client.call_tool("get_referenced_method_full_name_by_call_id", {"id": call_id})
-        print(f"Referenced method: {ref_method[0].text}")
-    except Exception as e:
-        print(f"Failed to get referenced method: {str(e)}")
-        success = False
-    
-    print("Testing [get_calls_in_method_by_method_full_name] get calls in method...")
-    try:
-        calls = await client.call_tool("get_calls_in_method_by_method_full_name", {"method_full_name": method_full_name})
-        if calls:
-            print(f"Calls in method: {calls[0].text}")
-        else:
-            print(f"Calls in method: []")
-        success =  True
-    except Exception as e:
-        print(f"Failed to get calls in method: {str(e)}")
-        success =  False
-    return success
-
-async def test_method_code_queries(client, method_full_name, class_full_name, method_name, method_id):
-    """Test method name-related queries"""
-    print("Testing method name queries...")
-    success = True
-    
-    try:
-        # Test getting method code
-        print("Testing [get_method_code_by_full_name] get method code...")
-        code = await client.call_tool("get_method_code_by_full_name", {"method_full_name": method_full_name})
-        print(f"Method code: {code[0].text}")
-    except Exception as e:
-        print(f"Failed to get method code: {str(e)}")
-        success = False
-
-    try:
-        # Test getting method code by class full name and method name
-        print("Testing [get_method_code_by_class_full_name_and_method_name] get method code by class and method name...")
-        codes = await client.call_tool("get_method_code_by_class_full_name_and_method_name", {
-            "class_full_name": class_full_name,
-            "method_name": method_name
-        })
-        print(f"Method codes: {codes[0].text}")
-    except Exception as e:
-        print(f"Failed to get method codes: {str(e)}")
-        success = False    
-
-    try:
-        # Test getting method code by ID
-        print("Testing [get_method_code_by_id] get method code by ID...")
-        code = await client.call_tool("get_method_code_by_id", {"id": method_id})
-        print(f"Method code: {code[0].text}")
-    except Exception as e:
-        print(f"Failed to get method code: {str(e)}")
-        success = False
-    
-    return success
+def check(name, ok, detail=""):
+    RESULTS.append((name, bool(ok)))
+    print("%s  %s%s" % ("PASS " if ok else "FAIL ", name, ("   " + str(detail)) if detail else ""))
 
 
-async def main():
-    """Main test function"""
-    print("Starting MCP server test...")
-    print("=" * 50)
-    
-    # Load environment variables
-    load_dotenv()
-    SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-    # Create client
-    client = Client(
-        transport=PythonStdioTransport('server.py'),
-        roots=[f"file://{SCRIPT_DIR}"]  # Replace with actual workspace directory
+def text_of(res):
+    """Tolerant extraction: fastmcp >=2 returns a CallToolResult with .content,
+    older versions return a list of TextContent."""
+    if res is None:
+        return ""
+    content = getattr(res, "content", None)
+    if content is None and isinstance(res, (list, tuple)):
+        content = res
+    if content is None:
+        return str(res)
+    return "\n".join(getattr(c, "text", None) or getattr(c, "content", None) or str(c)
+                     for c in content)
+
+
+async def main() -> int:
+    ap = argparse.ArgumentParser(description="joern MCP protocol test client")
+    ap.add_argument("--server", default=DEFAULT_SERVER, help="path to server.py")
+    ap.add_argument("--cpg", default=DEFAULT_CPG, help="CPG to load (default: fixture)")
+    args = ap.parse_args()
+
+    if not os.path.exists(args.cpg):
+        print("ERROR: CPG not found: %s\n       build it with tests/fixture/build_fixture.sh --cpg"
+              % args.cpg)
+        return 2
+    if not os.path.exists(args.server):
+        print("ERROR: server not found: %s" % args.server)
+        return 2
+
+    transport = PythonStdioTransport(
+        args.server,
+        env=os.environ.copy(),                    # fastmcp does not inherit env by itself
+        cwd=os.path.dirname(os.path.abspath(args.server)),
+        python_cmd=sys.executable,
     )
-    
-    async with client:
-        # Test basic connection
-        if not await test_connection(client):
-            print("Server connection test failed, terminating test")
-            return
-        
-        # Test ping
-        if not await test_ping(client):
-            print("Ping test failed, terminating test")
-            return
-        
-        # Test CPG loading
-        cpg_path = os.path.join(SCRIPT_DIR,"com.android.nfc.cpg")  # Replace with actual CPG file path
-        if not await test_load_cpg(client, cpg_path):
-            print("CPG loading test failed, terminating test")
-            return
-        
-        # Test method queries
-        method_full_name = "com.android.nfc.NfcService$6.onReceive:void(android.content.Context,android.content.Intent)"
-        method_name = "onReceive"
-        method_id = "111669160511L"
-        call_id = "30064950783L"
-        full_name_without_signature = "com.android.nfc.NfcService$6.onReceive"
-        class_full_name = "com.android.nfc.NfcService"  # Replace with actual class name
-        
-        if not await test_method_info_queries(client, method_full_name, method_id, full_name_without_signature):
-            print("Method queries test failed")
-        
-        # Test class queries
-        if not await test_class_info_queries(client, class_full_name):
-            print("Class queries test failed")
 
-        # Test method code queries
-        if not await test_method_code_queries(client, method_full_name, class_full_name, method_name, method_id):
-            print("Method ID queries test failed")
-        
-        # Test call queries
-        if not await test_call_info_queries(client, call_id, method_full_name):
-            print("Call queries test failed")
-        
+    print("Testing MCP server %s" % args.server)
+    print("Using CPG %s" % args.cpg)
+    print("=" * 72)
 
-    print("Test completed!")
+    async with Client(transport) as client:
+        tools = {t.name for t in await client.list_tools()}
+        print("tools available (%d): %s\n" % (len(tools), ", ".join(sorted(tools))))
+
+        async def call(tool, payload):
+            try:
+                return text_of(await client.call_tool(tool, payload))
+            except Exception as exc:              # surface tool errors as text
+                return "ERROR: %s" % exc
+
+        # ---------------------------------------------------------------- basics
+        r = await call("check_connection", {})
+        check("[check_connection] server connection", "connected" in r.lower(), r[:70].strip())
+
+        r = await call("ping", {})
+        check("[ping] server responsive", bool(r.strip()) and "ERROR" not in r, r[:70].strip())
+
+        check("[tool surface] chain helper exposed", "get_callee_chain_server" in tools)
+        check("[tool surface] indexed lookup exposed", "get_methods_by_name" in tools)
+
+        r = await call("load_cpg", {"cpg_filepath": args.cpg})
+        check("[load_cpg] fixture CPG loaded", "true" in r.lower(), r[:70].strip())
+
+        # ------------------------------------------------- indexed lookup (new tool)
+        r = await call("get_methods_by_name", {"method_name": "handleBroadCastReceive"})
+        check("[get_methods_by_name] non-standard entry found",
+              CLS + ".handleBroadCastReceive" in r, r[:120].replace("\n", " "))
+
+        r = await call("get_methods_by_name", {"method_name": "refresh"})
+        hits = set(re.findall(r"com\.example\.fixture\.[\w$]+\.refresh:void\(\)", r))
+        check("[get_methods_by_name] duplicated simple name -> 3 classes", len(hits) >= 3,
+              "%d distinct classes" % len(hits))
+
+        # ------------------------------------------------- legacy callee/caller tools
+        r = await call("get_method_callees", {"method_full_name": ENTRY})
+        check("[get_method_callees] first hop resolved", "HdMemberManager.call" in r,
+              r[:100].replace("\n", " "))
+
+        r = await call("get_method_callers", {"method_full_name": ENTRY})
+        check("[get_method_callers] caller is the base-class onReceive shell",
+              "SafeReceiverBase.onReceive" in r, r[:110].replace("\n", " "))
+
+        # ------------------------------------------------- chain helper (new tool)
+        r = await call("get_callee_chain_server",
+                       {"method_full_name": ENTRY, "depth": 6, "limit": 40})
+        check("[get_callee_chain_server] reaches the chain end",
+              "StateWriter.updateBySilent" in r, "%d chars" % len(r))
+        check("[get_callee_chain_server] surfaces the business write",
+              "hd_member" in r)
+
+        # ------------------------------------------------- class level queries
+        r = await call("get_class_methods_by_class_full_name", {"class_full_name": CLS})
+        check("[get_class_methods] entry + duplicated name present",
+              "handleBroadCastReceive" in r and "refresh" in r, r[:110].replace("\n", " "))
+
+        r = await call("get_class_methods_by_class_full_name", {"class_full_name": INNER})
+        check("[get_class_methods] anonymous inner class reachable",
+              "run" in r and "ERROR" not in r, r[:110].replace("\n", " "))
+
+        r = await call("get_derived_classes_by_class_full_name", {"class_full_name": BASE})
+        check("[get_derived_classes] base receiver -> AccountReceiver",
+              "AccountReceiver" in r, r[:110].replace("\n", " "))
+
+        # ------------------------------------------------- code / id round trip
+        r = await call("get_method_code_by_full_name", {"method_full_name": ENTRY})
+        check("[get_method_code_by_full_name] returns the body",
+              "handleBroadCastReceive" in r, r[:90].replace("\n", " "))
+
+        r = await call("get_method_callees", {"method_full_name": ENTRY})
+        m = re.search(r"method_id=(\d+)", r)
+        if m:
+            mid = m.group(1) + "L"
+            r2 = await call("get_method_full_name_by_id", {"method_id": mid})
+            check("[get_method_full_name_by_id] id round trip",
+                  "ERROR" not in r2 and len(r2.strip()) > 0, r2[:90].replace("\n", " "))
+        else:
+            check("[get_method_full_name_by_id] id round trip", False, "no method_id in callees output")
+
+        if "get_method_by_full_name_without_signature" in tools:
+            r = await call("get_method_by_full_name_without_signature",
+                           {"full_name_without_signature": CLS + ".handleBroadCastReceive"})
+            check("[get_method_by_full_name_without_signature] resolves",
+                  bool(r.strip()) and "ERROR" not in r, r[:90].replace("\n", " "))
+        else:
+            print("SKIP   [get_method_by_full_name_without_signature] not exposed by this build")
+
+        # ------------------------------------------------- error path
+        r = await call("get_method_callees", {"method_full_name": "no.such.Klass.x:void()"})
+        check("[error path] explicit ERROR string, never a silent empty result",
+              "ERROR" in r, r[:100].replace("\n", " "))
+
+    failed = [n for n, ok in RESULTS if not ok]
+    print("=" * 72)
+    print("%d/%d checks passed" % (len(RESULTS) - len(failed), len(RESULTS)))
+    if failed:
+        print("failed: " + ", ".join(failed))
+        return 1
+    print("ALL CHECKS PASSED")
+    return 0
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    sys.exit(asyncio.run(main()))
