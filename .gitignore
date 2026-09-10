@@ -17,3 +17,7 @@ wheels/
 
 # Joern CPG files (large test artifacts)
 *.cpg
+*.bak-*
+
+# Local credential-injecting wrapper for verify_mcp.py (machine-specific, not for commit)
+run_verify.sh

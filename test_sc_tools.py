@@ -33,7 +33,7 @@ def joern_remote(query):
             headers=headers,
             timeout=10
         )
-        response.raise_for_status()  # 自动处理HTTP错误状态码
+        response.raise_for_status()  # raise on HTTP error status codes
 
         result = response.json()
         return remove_ansi_escape_sequences(result.get('stdout', ''))

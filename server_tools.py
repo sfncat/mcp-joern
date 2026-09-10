@@ -254,3 +254,29 @@ def find_flows_from_param_index_to_sink_call(
         f'find_flows_from_param_index_to_sink_call("{source_method_full_name}", {param_index}, "{sink_call_name}", {max_paths})'
     )
     return extract_list(response)
+
+@joern_mcp.tool()
+def get_callee_chain_server(method_full_name: str, depth: int = 3, limit: int = 40) -> list[str]:
+    """One round-trip call-graph expansion: returns the callee chain (BFS, JDK/operator callees
+    skipped) as a list of "fullName<TAB>code" entries (server_tools.sc: get_callee_chain).
+    Replaces N separate get_method_callees calls."""
+    response = joern_remote(f'get_callee_chain("{method_full_name}", {depth}, {limit})')
+    if not response:
+        return ["Query Failed"]
+    raw = extract_value(response)
+    if isinstance(raw, str):
+        return [e for e in raw.split("@@@CHAIN@@@") if e.strip()]
+    return [str(raw)]
+
+
+@joern_mcp.tool()
+def get_methods_by_name(method_name: str) -> list[str]:
+    """Indexed lookup of method full names by simple name (nameExact).
+    Prefer this over full-CPG .filter(_.fullName.contains(...)) scans, which time out."""
+    response = joern_remote(f'get_methods_by_name("{method_name}")')
+    if not response:
+        return ["Query Failed"]
+    raw = extract_value(response)
+    if isinstance(raw, str):
+        return [l for l in raw.splitlines() if l.strip()]
+    return [str(raw)]

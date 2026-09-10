@@ -45,10 +45,21 @@
 
 1. 启动Joern服务器：
    ```bash
-   joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools.sc
+   joern -J-Xmx40G -J-XX:CompressedClassSpaceSize=1g -J-XX:MaxMetaspaceSize=2g \
+         --server --server-host 127.0.0.1 --server-port 16162 \
+         --server-auth-username user --server-auth-password password --import server_tools.sc
    或
-   joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools_source.sc
+   joern -J-Xmx40G -J-XX:CompressedClassSpaceSize=1g -J-XX:MaxMetaspaceSize=2g \
+         --server --server-host 127.0.0.1 --server-port 16162 \
+         --server-auth-username user --server-auth-password password --import server_tools_source.sc
    ```
+   **为什么要加这两个 JVM 参数** —— 默认值偏小，且只在长时间使用后才暴露，容易被误判成"服务坏了"：
+
+   - `-XX:CompressedClassSpaceSize=1g`：Joern REPL 每执行一次查询就编译一个新类（`rs$line$N`），
+     默认类空间（128m）在几千次查询后被耗尽，之后**所有**查询都失败并报
+     `NoClassDefFoundError: Could not initialize class rs$line$NNNN`。
+   - `-XX:MaxMetaspaceSize=2g`：与类空间同步留出元空间余量。
+   - `-J-Xmx…`：按 CPG 大小设置堆；堆不足的表现是查询超时，而不是 OOM。实测约 400 MB 的 CPG 用 `-Xmx60G` 稳定。
    如果是在Windows下使用,可能需要通过命令行或在系统环境变量中设置JVM系统变量解决加载脚本失败的问题
    ```
    set _JAVA_OPTIONS=-Dfile.encoding=UTF-8
@@ -116,3 +127,38 @@ https://github.com/flankerhqd/jebmcp
 https://docs.joern.io/server/
 
 https://docs.joern.io/interpreter/
+
+## 更新记录
+
+### v1.2.0 (2026-09-10)
+
+**服务端调用链工具（性能）**
+
+- `server_tools.sc` 新增 Scala 助手：`get_methods_by_name`（`nameExact` 索引查询，替代全表
+  `.filter(_.fullName.contains(...))` 扫描——后者在大 CPG 上必然超时）、`get_callee_chain`
+  （服务端 BFS，一次 HTTP 返回整条调用链：方法全名 + 代码，自动跳过 JDK/框架方法）、
+  `get_callee_chain_names`（只要方法名、不带代码的轻量版）。
+- 新增对应的 MCP 工具：`get_callee_chain_server`、`get_methods_by_name`。
+- 效果：解析一条调用链的 HTTP 往返从约 30 次降到 1 次。
+
+**HTTP 客户端加固（`server.py`）**
+
+- `joern_remote` 改用 keep-alive 的 `requests.Session` 并配置连接池。
+- 瞬时失败重试 3 次；401/403 鉴权错误**快速失败**（这类错误不是瞬时故障）。
+- 失败时返回明确的 `ERROR: ...` 字符串（原来是 `None`），调用方可以区分“失败”与“空结果”。
+
+**修复**
+
+- 凭据键兼容：仓库自带的 `.env` 用 `USER_NAME`/`PASSWORD`，而宿主配置注入的是
+  `JOERN_AUTH_USERNAME`/`JOERN_AUTH_PASSWORD`；原实现只读后者，导致任何不经宿主注入 env 的启动
+  （含仓库自带 `test_mcp_client.py`）静默 401。现在两者都接受。
+- FastMCP 兼容：`log_level` 构造参数在 fastmcp 2.x 中已被移除，现在用 `try/except` 传入并以
+  `FASTMCP_LOG_LEVEL` 兜底。
+
+**文档与杂项**
+
+- 启动命令增加 `-XX:CompressedClassSpaceSize=1g -XX:MaxMetaspaceSize=2g`（默认值为何只在长时间
+  使用后才失败，见“启动Joern服务器”下的说明）。
+- 代码注释一律英文；中文只保留在 `README_cn.md` 与 `prompts_cn.md`。
+- `.gitignore` 增加 `*.cpg`、`*.bak-*` 与本机凭据包装脚本 `run_verify.sh`。
+- 版本号升级到 1.2.0。

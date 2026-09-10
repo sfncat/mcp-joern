@@ -27,9 +27,9 @@ import _root_.io.shiftleft.semanticcpg.language.*
 
 var cpg: Cpg = null
 def convertToLong(str: String): Long = {
-    // 移除字符串末尾的'L'字符（如果存在）
+    // Strip the trailing 'L' from the string, if present
     val cleanStr = if (str.endsWith("L")) str.dropRight(1) else str
-    // 转换为Long
+    // Convert to Long
     cleanStr.toLong
   }
 

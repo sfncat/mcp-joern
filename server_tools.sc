@@ -27,9 +27,9 @@ import _root_.io.shiftleft.semanticcpg.language.*
 
 var cpg: Cpg = null
 def convertToLong(str: String): Long = {
-    // 移除字符串末尾的'L'字符（如果存在）
+    // Strip the trailing 'L' from the string, if present
     val cleanStr = if (str.endsWith("L")) str.dropRight(1) else str
-    // 转换为Long
+    // Convert to Long
     cleanStr.toLong
   }
 
@@ -426,3 +426,50 @@ def find_flows_from_param_index_to_sink_call(
   sink.reachableByFlows(source).map(format_flow_path).take(max_paths).l
 }
 
+
+
+/* ============ 2026-09-10 optimization: server-side call-chain query (one HTTP call returns the whole chain) ============ */
+
+def get_methods_by_name(method_name: String): String = {
+  /*Indexed lookup by method name (nameExact hits the index; .filter(_.fullName.contains) = full scan, times out).
+  @return: newline-joined "fullName" strings*/
+  cpg.method.nameExact(method_name).fullName.l.distinct.mkString("\n")
+}
+
+def get_callee_chain(method_full_name: String, depth: Int = 3, limit: Int = 40,
+                     skip_prefixes: List[String] = List("<operator>", "java.", "javax.", "sun.",
+                       "android.", "androidx.", "kotlin.", "scala.", "com.google.", "org.", "jdk.", "io.", "okhttp")): String = {
+  /*Server-side BFS over callees. Returns newline-joined entries "fullName<TAB>code(with \n escaped)".
+  Replaces N client round-trips with one; also keeps the number of REPL bindings low.*/
+  val seen = mutable.LinkedHashSet[String]()
+  var frontier = List(method_full_name)
+  var d = 0
+  def ext(fn: String): Boolean = skip_prefixes.exists(p => fn.startsWith(p))
+  while (d <= depth && frontier.nonEmpty && seen.size < limit) {
+    val next = mutable.ListBuffer[String]()
+    frontier.foreach { fn =>
+      if (!seen.contains(fn) && !ext(fn)) {
+        seen += fn
+        if (d < depth) {
+          cpg.method.fullNameExact(fn).headOption.foreach { m =>
+            m.callee.fullName.distinct.l.foreach { c =>
+              if (!seen.contains(c) && !ext(c)) next += c
+            }
+          }
+        }
+      }
+    }
+    frontier = next.toList
+    d += 1
+  }
+  seen.toList.take(limit).map { fn =>
+    val code = cpg.method.fullNameExact(fn).headOption.map(_.code).getOrElse("")
+    fn + "\t" + code.replace("\n", "\\n").replace("\t", " ")
+  }.mkString("\n@@@CHAIN@@@\n")
+}
+
+def get_callee_chain_names(method_full_name: String, depth: Int = 3, limit: Int = 40): String = {
+  /*Cheap variant: chain full names only, no code.*/
+  get_callee_chain(method_full_name, depth, limit).split("\n@@@CHAIN@@@\n").filter(_.nonEmpty)
+    .map(e => e.split("\t")(0)).mkString("\n")
+}

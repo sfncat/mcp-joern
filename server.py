@@ -6,6 +6,7 @@ import time
 from typing import Dict, Any
 
 import requests
+from requests.adapters import HTTPAdapter
 from fastmcp import FastMCP
 from dotenv import load_dotenv
 from common_tools import *
@@ -38,7 +39,12 @@ except TypeError:
     joern_mcp = FastMCP("joern-mcp")
 # joern_mcp._tool_manager.
 print(server_endpoint)
-basic_auth = (os.getenv("JOERN_AUTH_USERNAME"), os.getenv("JOERN_AUTH_PASSWORD"))
+# .env in this repo uses USER_NAME/PASSWORD while MCP host config injects JOERN_AUTH_*;
+# accept both (falling back), otherwise a non-Hermes launch silently 401s.
+basic_auth = (os.getenv("JOERN_AUTH_USERNAME") or os.getenv("USER_NAME"),
+              os.getenv("JOERN_AUTH_PASSWORD") or os.getenv("PASSWORD"))
+_SESSION = requests.Session()          # keep-alive: avoids a new TCP conn per query
+_SESSION.mount('http://', HTTPAdapter(pool_connections=8, pool_maxsize=8))
 timeout = int(joern_config.get('timeout', '300'))
 
 def joern_remote(query):
@@ -54,26 +60,33 @@ def joern_remote(query):
     """
     data = {"query": query}
     headers = {'Content-Type': 'application/json'}
-
-    try:
-        response = requests.post(
-            f'http://{server_endpoint}/query-sync',
-            data=json.dumps(data),
-            headers=headers,
-            auth=basic_auth,
-            timeout=timeout
-        )
-        response.raise_for_status()  
-        
-        result = response.json()
-        return remove_ansi_escape_sequences(result.get('stdout', ''))
-        
-    except requests.exceptions.RequestException as e:
-        sys.stderr.write(f"Request Error: {str(e)}\n")
-    except json.JSONDecodeError:
-        sys.stderr.write("Error: Invalid JSON response\n")
-    
-    return None
+    last = None
+    for attempt in range(3):
+        try:
+            response = _SESSION.post(
+                f'http://{server_endpoint}/query-sync',
+                data=json.dumps(data),
+                headers=headers,
+                auth=basic_auth,
+                timeout=timeout
+            )
+            response.raise_for_status()
+            result = response.json()
+            return remove_ansi_escape_sequences(result.get('stdout', ''))
+        except requests.exceptions.HTTPError as e:
+            last = e
+            code = getattr(getattr(e, 'response', None), 'status_code', None)
+            if code in (401, 403):      # auth failure is not transient: fail fast, no retry
+                break
+            time.sleep(1.5 * (attempt + 1))
+        except requests.exceptions.RequestException as e:
+            last = e
+            time.sleep(1.5 * (attempt + 1))
+        except json.JSONDecodeError:
+            last = 'Invalid JSON response'
+            time.sleep(1.5 * (attempt + 1))
+    sys.stderr.write(f"Request failed after 3 attempts: {last}\n")
+    return f"ERROR: joern query failed after 3 attempts: {str(last)[:200]}"
 
 
 @joern_mcp.tool()

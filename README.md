@@ -51,10 +51,24 @@ This project is an MCP Server based on Joern, providing a series of features to 
 
 1. Start the Joern server:
    ```bash
-   joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools.sc
+   joern -J-Xmx40G -J-XX:CompressedClassSpaceSize=1g -J-XX:MaxMetaspaceSize=2g \
+         --server --server-host 127.0.0.1 --server-port 16162 \
+         --server-auth-username user --server-auth-password password --import server_tools.sc
    Or
-   joern -J-Xmx40G --server --server-host 127.0.0.1 --server-port 16162 --server-auth-username user --server-auth-password password --import server_tools_source.sc
+   joern -J-Xmx40G -J-XX:CompressedClassSpaceSize=1g -J-XX:MaxMetaspaceSize=2g \
+         --server --server-host 127.0.0.1 --server-port 16162 \
+         --server-auth-username user --server-auth-password password --import server_tools_source.sc
    ```
+   **Why the extra JVM flags.** Both defaults are too small and only fail after prolonged
+   use, so the breakage looks like a dead server rather than a JVM sizing problem:
+
+   - `-XX:CompressedClassSpaceSize=1g` — the Joern REPL compiles one class per query
+     (`rs$line$N`). The default class space (128m) is exhausted after a few thousand
+     queries, after which **every** query fails with
+     `NoClassDefFoundError: Could not initialize class rs$line$NNNN`.
+   - `-XX:MaxMetaspaceSize=2g` — keeps metaspace headroom in step with the class space.
+   - `-J-Xmx…` — size the heap for your CPG. An undersized heap shows up as queries
+     timing out (not as an OOM). We run `-Xmx60G` for a ~400 MB CPG.
     If you are using it under Windows, you may need to set the JVM system variables through the command line or in the system environment variables.
    ```
    set _JAVA_OPTIONS=-Dfile.encoding=UTF-8
@@ -121,3 +135,42 @@ https://github.com/flankerhqd/jebmcp
 https://docs.joern.io/server/
 
 https://docs.joern.io/interpreter/
+
+## Change Log
+
+### v1.2.0 (2026-09-10)
+
+**Server-side call-graph tools (performance)**
+
+- New Scala helpers in `server_tools.sc`: `get_methods_by_name` (indexed `nameExact` lookup,
+  replacing full-CPG `.filter(_.fullName.contains(...))` scans which time out on large CPGs),
+  `get_callee_chain` (server-side BFS returning the whole call chain - method full name plus
+  code, JDK/framework callees skipped - in one HTTP round-trip) and `get_callee_chain_names`
+  (names only, no code).
+- New MCP tools exposing them: `get_callee_chain_server`, `get_methods_by_name`.
+- Effect: resolving one call chain drops from ~30 HTTP round-trips to 1.
+
+**HTTP client hardening (`server.py`)**
+
+- `joern_remote` now uses a kept-alive `requests.Session` with a connection pool.
+- Retries transient failures 3 times, but fails fast on 401/403 (auth errors are not transient).
+- Returns an explicit `ERROR: ...` string on failure instead of `None`, so callers can tell a
+  failure apart from a legitimately empty result.
+
+**Fixes**
+
+- Credential key compatibility: the shipped `.env` uses `USER_NAME`/`PASSWORD` while host
+  configs inject `JOERN_AUTH_USERNAME`/`JOERN_AUTH_PASSWORD`. Only the latter was read, so any
+  launch without host-injected env (including the bundled `test_mcp_client.py`) failed with a
+  silent 401. Both names are now accepted.
+- FastMCP compatibility: the `log_level` constructor argument was removed in fastmcp 2.x; it is
+  now passed inside a `try/except` with a `FASTMCP_LOG_LEVEL` fallback.
+
+**Docs & housekeeping**
+
+- Start command now includes `-XX:CompressedClassSpaceSize=1g -XX:MaxMetaspaceSize=2g` (see the
+  note under "Start the Joern server" for why the defaults fail only after prolonged use).
+- Code comments are English only; Chinese is confined to `README_cn.md` and `prompts_cn.md`.
+- `.gitignore`: ignore local CPG artifacts (`*.cpg`), backups (`*.bak-*`) and the local
+  credential-injecting `run_verify.sh` wrapper.
+- Version bumped to 1.2.0.

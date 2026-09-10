@@ -17,3 +17,7 @@
 ## Output Rules
 1. Output should use markdown format  
 2. Intent data should be expressed in Java language 
+
+## Tool Tips
+1. To walk a call chain, prefer `get_callee_chain_server`: a single call returns the whole chain (method full name + code).
+2. Use `get_methods_by_name` for an indexed lookup of method full names by simple name (fast; avoids full-CPG scans that time out).
